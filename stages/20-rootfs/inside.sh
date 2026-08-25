@@ -127,7 +127,10 @@ say "restoring pacman's space check for the shipped system"
 sed -i 's/^#CheckSpace/CheckSpace/' "$ROOTFS/etc/pacman.conf"
 
 say "cleaning package cache"
-inchroot 'pacman -Scc --noconfirm >/dev/null 2>&1 || true'
+# NOT `pacman -Scc --noconfirm`: that prompt defaults to No, so --noconfirm
+# answers No and the cache is silently kept - 1.7 GB of downloaded packages
+# riding along in the shipped image.
+rm -rf "$ROOTFS/var/cache/pacman/pkg/"*
 rm -f "$ROOTFS/etc/resolv.conf"
 ln -sf /run/systemd/resolve/stub-resolv.conf "$ROOTFS/etc/resolv.conf" 2>/dev/null || true
 
