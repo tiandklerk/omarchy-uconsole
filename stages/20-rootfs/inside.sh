@@ -89,8 +89,12 @@ inchroot "depmod -a $KREL"
 
 # --- uConsole overlay ------------------------------------------------------
 say "applying uConsole overlay"
-rsync -a /src/overlay/etc/ "$ROOTFS/etc/"
-rsync -a /src/overlay/usr/ "$ROOTFS/usr/"
+# --chown=root:root is essential: rsync -a applies the SOURCE directory's
+# ownership to the destination directory even with a trailing slash, and the
+# overlay lives in the repo owned by the invoking user. Without it /etc and
+# /usr end up owned by uid 1000 - the first user created on the device.
+rsync -a --chown=root:root /src/overlay/etc/ "$ROOTFS/etc/"
+rsync -a --chown=root:root /src/overlay/usr/ "$ROOTFS/usr/"
 # NOTE: overlay/skel is applied in stage 30, *after* omarchy-settings installs.
 # That package ships its own /etc/skel/.config and would otherwise clobber our
 # uConsole monitor/input overrides.

@@ -1,0 +1,34 @@
+#!/bin/bash
+# Run the Omarchy install steps that were deferred from image build time.
+#
+# Some of Omarchy's setup cannot run inside a build chroot: ufw needs a live
+# kernel with netfilter to probe the iptables version, and fails with
+# "Couldn't determine iptables version" against the builder's kernel. Rather
+# than ship a half-configured firewall, the step is deferred and run here, once,
+# on real hardware.
+set -uo pipefail
+
+MARKER=/var/lib/uconsole/omarchy-deferred
+[[ -f "$MARKER" ]] || exit 0
+
+export OMARCHY_PATH="${OMARCHY_PATH:-/usr/share/omarchy}"
+export OMARCHY_INSTALL="$OMARCHY_PATH/install"
+export PATH="$OMARCHY_PATH/bin:$PATH"
+
+status=0
+while read -r script; do
+  [[ -n "$script" && -x "$script" ]] || continue
+  echo "running deferred Omarchy step: $script"
+  if ! "$script"; then
+    echo "deferred step failed: $script" >&2
+    status=1
+  fi
+done < "$MARKER"
+
+# Leave the marker in place on failure so the next boot retries; the unit is
+# cheap and a firewall that never came up is worth retrying.
+if (( status == 0 )); then
+  rm -f "$MARKER"
+  echo "deferred Omarchy setup complete"
+fi
+exit 0

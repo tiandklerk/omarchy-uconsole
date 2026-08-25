@@ -81,6 +81,54 @@ done
 # setup without an install user, and leaves the account creation to first boot.
 # That is exactly our situation - we cannot know the owner's username at build
 # time.
+# --- steps that cannot complete in a build chroot -------------------------
+# Omarchy's config/all.sh runs every step with `set -e`, so one failure aborts
+# everything after it - including the sddm login setup and the post-install
+# steps. Two steps cannot succeed here, for different reasons:
+#
+#   snapper.sh   - snapper is deliberately not installed (no bootloader on a Pi
+#                  to hang snapshot rollback off). Replaced with a no-op.
+#   firewall.sh  - ufw probes the running kernel for an iptables version and
+#                  fails against the builder's kernel. Deferred to first boot on
+#                  real hardware via uconsole-firstboot-omarchy.service.
+DEFER_MARKER="$ROOTFS/var/lib/uconsole/omarchy-deferred"
+mkdir -p "$(dirname "$DEFER_MARKER")"
+: > "$DEFER_MARKER"
+
+FIREWALL_STEP="$ROOTFS/usr/share/omarchy/install/config/firewall.sh"
+if [[ -f "$FIREWALL_STEP" && ! -f "$FIREWALL_STEP.deferred" ]]; then
+  mv "$FIREWALL_STEP" "$FIREWALL_STEP.deferred"
+  cat > "$FIREWALL_STEP" <<'NOFW'
+#!/bin/bash
+# Replaced by omarchy-uconsole. ufw cannot determine an iptables version inside
+# a build chroot; the real step runs on first boot from
+# uconsole-firstboot-omarchy.service.
+echo "deferring firewall setup to first boot"
+NOFW
+  chmod +x "$FIREWALL_STEP"
+  echo "/usr/share/omarchy/install/config/firewall.sh.deferred" >> "$DEFER_MARKER"
+  echo "  deferred the firewall step to first boot"
+fi
+
+# Omarchy's config/all.sh runs snapper.sh unconditionally and the script dies
+# under set -e when snapper is missing (exit 127), aborting everything after it
+# - including the sddm login setup and the post-install steps. snapper is
+# deliberately not installed here: there is no bootloader on a Pi to hang
+# snapshot rollback off (see docs/03-not-included.md). So the step is replaced
+# with an explicit no-op rather than allowed to take the rest of the run down.
+SNAPPER_STEP="$ROOTFS/usr/share/omarchy/install/config/snapper.sh"
+if [[ -f "$SNAPPER_STEP" ]]; then
+  cat > "$SNAPPER_STEP" <<'NOSNAP'
+#!/bin/bash
+# Replaced by omarchy-uconsole. snapper is not installed on this image: the
+# Raspberry Pi bootloader lives in SPI EEPROM and reads config.txt, so there is
+# no boot menu for snapshot-rollback entries.
+echo "skipping snapper setup (not applicable to a Raspberry Pi boot path)"
+NOSNAP
+  chmod +x "$SNAPPER_STEP"
+  echo "  neutralised the snapper setup step (package deliberately absent)"
+fi
+
 say "applying Omarchy system setup (deferred provisioning)"
 if chroot "$ROOTFS" /bin/bash -c \
      'omarchy-apply-system --defer-provisioning --first-install' 2>&1 | tail -30; then
@@ -113,7 +161,11 @@ fi
 # omarchy-settings ships its own /etc/skel/.config; our panel geometry and
 # input tuning must land on top of it, not under it.
 say "applying uConsole user defaults over Omarchy's skel"
-rsync -a /src/overlay/skel/ "$ROOTFS/etc/skel/"
+# --chown=root:root is essential: rsync -a applies the SOURCE directory's
+# ownership to the destination directory even with a trailing slash, and the
+# overlay lives in the repo owned by the invoking user. Without it /etc and
+# /usr end up owned by uid 1000 - the first user created on the device.
+rsync -a --chown=root:root /src/overlay/skel/ "$ROOTFS/etc/skel/"
 
 # Seed the maintenance account too, since it was created before Omarchy
 # installed and so never picked up /etc/skel.
@@ -121,9 +173,13 @@ for home in "$ROOTFS"/home/*; do
   [[ -d "$home" ]] || continue
   user="$(basename "$home")"
   rsync -a --ignore-existing "$ROOTFS/etc/skel/." "$home/"
-  rsync -a /src/overlay/skel/ "$home/"
+  rsync -a --chown=root:root /src/overlay/skel/ "$home/"
   chroot "$ROOTFS" chown -R "$user:$user" "/home/$user"
 done
+
+say "enabling deferred first-boot setup"
+inchroot 'systemctl enable uconsole-firstboot-omarchy.service' || \
+  echo "  could not enable the deferred-setup unit"
 
 say "enabling the display manager"
 inchroot 'systemctl enable sddm' || echo "  sddm not installed; Omarchy will start from a TTY"

@@ -1,0 +1,16 @@
+[Unit]
+Description=Finish Omarchy setup steps that cannot run in a build chroot
+After=network-online.target
+Wants=network-online.target
+Before=display-manager.service
+ConditionPathExists=/var/lib/uconsole/omarchy-deferred
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+ExecStart=/usr/local/bin/uconsole-firstboot-omarchy
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target
