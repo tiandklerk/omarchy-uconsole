@@ -49,7 +49,10 @@ run_in "$IMG_CROSS" \
   -v "$MODROOT:/build/modroot" \
   -v "$HERE:/build/stage:ro" \
   -e "DEFCONFIG=$DEFCONFIG" \
-  -e "LOCALVERSION=$KERNEL_LOCALVERSION" \
+  # NOT named LOCALVERSION: the kernel Makefile appends an environment
+  # LOCALVERSION on top of CONFIG_LOCALVERSION, which silently doubles the
+  # suffix (6.12.95-uconsole-cm5-uconsole-cm5).
+  -e "UC_LOCALVERSION=$KERNEL_LOCALVERSION" \
   -e "JOBS=$JOBS" \
   -- \
   bash -euo pipefail -c '
@@ -67,7 +70,7 @@ run_in "$IMG_CROSS" \
 
     # Pin the version suffix so modules land in a uConsole-specific directory
     # and never collide with a stock Arch kernel.
-    ./scripts/config --file /build/out/.config --set-str LOCALVERSION "${LOCALVERSION}"
+    ./scripts/config --file /build/out/.config --set-str LOCALVERSION "${UC_LOCALVERSION}"
     ./scripts/config --file /build/out/.config --disable LOCALVERSION_AUTO
     $M olddefconfig
 
