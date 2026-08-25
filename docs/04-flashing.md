@@ -3,16 +3,20 @@
 ## What you get
 
 ```
-out/omarchy-uconsole-cm5.img.xz     compressed, flash this
-out/omarchy-uconsole-cm5.img        uncompressed
-out/omarchy-uconsole-cm5.sha256     checksums for both
+out/omarchy-uconsole-cm5.img        flash this (~11 GiB)
+out/omarchy-uconsole-cm5.sha256     checksum
 ```
 
-The image is sized to the installed system plus about 1.5 GiB of headroom, so
-its size depends on how many packages built for aarch64 — expect somewhere
-between 8 and 16 GiB uncompressed. `ls -lh out/` tells you. Use a card at least
-that large; root is grown to fill whatever card it lands on during first boot,
-so bigger is fine and needs no action.
+An `.img.xz` appears alongside it when the build compresses (`IMG_COMPRESS=xz`,
+the default when there is disk headroom for it).
+
+The image is sized to the installed system plus about 1.5 GiB of headroom. The
+reference build comes out at **11 GiB**, so use a **16 GB card or larger** —
+`ls -lh out/` confirms the size of yours. Root is grown to fill whatever card it
+lands on during first boot, so a bigger card is fine and needs no action.
+
+Note the file is sparse: it reports 11 GiB but occupies about 8.4 GiB on disk.
+`dd` still writes the full 11 GiB to the card.
 
 ## Verify first
 
@@ -28,7 +32,7 @@ to the wrong device destroys it.**
 With Raspberry Pi Imager (choose "Use custom image"), or:
 
 ```bash
-xzcat out/omarchy-uconsole-cm5.img.xz | sudo dd of=/dev/sdX bs=4M status=progress conv=fsync
+sudo dd if=out/omarchy-uconsole-cm5.img of=/dev/sdX bs=4M status=progress conv=fsync
 sync
 ```
 
