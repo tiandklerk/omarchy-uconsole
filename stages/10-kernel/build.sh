@@ -99,9 +99,14 @@ mkdir -p "$OUT/dtbs" "$OUT/overlays"
 # Base device trees live in the aarch64 tree; the RPi firmware wants them flat
 # in the root of the boot partition.
 find "$KBUILD/arch/arm64/boot/dts/broadcom" -name '*.dtb' -exec cp {} "$OUT/dtbs/" \;
-# Overlays are built out of the 32-bit tree even for a 64-bit kernel.
-cp "$KBUILD/arch/arm/boot/dts/overlays"/*.dtbo "$OUT/overlays/"
-cp "$KBUILD/arch/arm/boot/dts/overlays/overlay_map.dtb" "$OUT/overlays/" 2>/dev/null || true
+# Overlay *sources* live in the 32-bit tree and are shared, but an arm64 build
+# emits the compiled .dtbo files under arch/arm64. Prefer that, and fall back to
+# the 32-bit path so a differently-arranged tree still works.
+OVL_SRC="$KBUILD/arch/arm64/boot/dts/overlays"
+[[ -d "$OVL_SRC" ]] || OVL_SRC="$KBUILD/arch/arm/boot/dts/overlays"
+require_file "$OVL_SRC" "no overlays directory in the build output"
+cp "$OVL_SRC"/*.dtbo "$OUT/overlays/"
+cp "$OVL_SRC/overlay_map.dtb" "$OUT/overlays/" 2>/dev/null || true
 
 cp -a "$MODROOT/lib/modules" "$OUT/modules"
 # The build symlinks point into the throwaway build dir; drop them.
