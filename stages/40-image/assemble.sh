@@ -5,6 +5,7 @@ set -euo pipefail
 ROOTFS=/work/rootfs
 IMG="/out/${IMG_NAME}.img"
 MNT=/mnt/img
+die_msg() { printf '\033[1;31m  ✗ %s\033[0m\n' "$*" >&2; exit 1; }
 say() { printf '\n\033[1;35m==> %s\033[0m\n' "$*"; }
 
 LOOP=""
@@ -41,6 +42,24 @@ LOOP="$(losetup -fP --show "$IMG")"
 BOOT_DEV="${LOOP}p1"; ROOT_DEV="${LOOP}p2"
 say "loop device: $LOOP"
 
+# losetup -P makes the kernel scan the partition table, but inside a container
+# there is no udev to turn the resulting sysfs entries into /dev nodes, so
+# ${LOOP}p1 does not exist. Create the nodes by hand from what the kernel
+# reports. (partprobe/kpartx have the same problem: they rely on udev too.)
+ensure_part_nodes() {
+  local loopname; loopname="$(basename "$LOOP")"
+  local sysdev major minor part
+  for sysdev in /sys/class/block/"${loopname}"p*; do
+    [[ -e "$sysdev/dev" ]] || continue
+    part="/dev/$(basename "$sysdev")"
+    [[ -b "$part" ]] && continue
+    IFS=: read -r major minor < "$sysdev/dev"
+    mknod "$part" b "$major" "$minor"
+  done
+}
+ensure_part_nodes
+[[ -b "$BOOT_DEV" && -b "$ROOT_DEV" ]] || die_msg "partition devices did not appear for $LOOP"
+
 say "creating filesystems"
 mkfs.vfat -F 32 -n UCONSOLE  "$BOOT_DEV" >/dev/null
 # 256-byte inodes and no lazy init so the first boot is not spent finishing the
@@ -62,7 +81,10 @@ rsync -aHAX --numeric-ids \
   --exclude='/proc/*' --exclude='/sys/*' --exclude='/dev/*' \
   --exclude='/repo/*' --exclude='/.extracted' \
   "$ROOTFS/" "$MNT/"
-mkdir -p "$MNT"/{proc,sys,dev,boot,repo}
+# /repo is only a bind-mount point during stage 30; it has no business in a
+# shipped image.
+rmdir "$MNT/repo" 2>/dev/null || true
+mkdir -p "$MNT"/{proc,sys,dev,boot}
 
 say "populating the boot partition"
 mount "$BOOT_DEV" "$MNT/boot"
