@@ -1,0 +1,24 @@
+# Packages the uConsole needs that are not in Omarchy's lists, because Omarchy
+# has never had to care about a Broadcom SoC.
+#
+# Installed by stage 20 alongside packages/base.packages.
+
+# Vulkan on the CM5's VideoCore VII. Omarchy ships vulkan-intel, vulkan-radeon
+# and vulkan-asahi; the Broadcom driver is the one that matters here, and
+# without it anything Vulkan falls back to software rendering.
+vulkan-broadcom
+
+# Mesa's OpenGL for v3d. Normally pulled in as a dependency, listed explicitly
+# so a change upstream cannot silently leave the desktop on llvmpipe.
+mesa
+
+# growpart, used by uconsole-firstboot-resize to grow root into the whole card.
+# There is a parted fallback, but growpart handles the edge cases better.
+cloud-guest-utils
+
+# Diagnostics for the first-boot checklist in docs/05-first-boot.md.
+mesa-utils
+v4l-utils
+
+# Firmware for the CM5's Broadcom wifi/bluetooth radio.
+linux-firmware

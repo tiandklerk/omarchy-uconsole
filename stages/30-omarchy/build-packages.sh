@@ -5,12 +5,39 @@ set -uo pipefail          # deliberately NOT -e: one bad PKGBUILD must not end t
 
 REPORT=/repo/build-report.tsv
 PKGS_SRC=/cache/omarchy-pkgs
-WORKDIR=/build
+# Build under the bind-mounted work directory so makepkg logs survive the
+# container and can be read from the host while a long build is in flight.
+WORKDIR=/work/pkgbuild
 say() { printf '\n\033[1;35m==> %s\033[0m\n' "$*"; }
 
+mkdir -p "$WORKDIR"
 sudo pacman -Sy --noconfirm >/dev/null
 
 printf 'package\tstatus\tdetail\n' > "$REPORT"
+
+# Port patches: changes a PKGBUILD needs to be installable on this hardware,
+# as opposed to merely buildable. Each one is a deliberate, documented
+# divergence from upstream - keep the reasons here, not in a bare sed.
+apply_port_patches() {
+  local pkg="$1" dir="$2"
+
+  case "$pkg" in
+    omarchy)
+      # omarchy depends on the limine bootloader and the snapper/btrfs
+      # snapshot stack. On a Compute Module there is no ESP and no boot menu:
+      # the firmware reads config.txt out of a FAT partition and jumps
+      # straight to the kernel. limine-mkinitcpio-hook and limine-snapper-sync
+      # are not even built for aarch64, so the dependency is unsatisfiable
+      # rather than merely useless.
+      #
+      # Dropping them costs boot-menu snapshot rollback, which is documented
+      # in docs/03-not-included.md. Nothing else in omarchy reads these.
+      sed -i -E "/^[[:space:]]*'(limine|limine-mkinitcpio-hook|limine-snapper-sync|snapper)'[[:space:]]*$/d" \
+        "$dir/PKGBUILD"
+      echo "    (dropped limine/snapper dependencies - no bootloader on a Pi)"
+      ;;
+  esac
+}
 
 build_one() {
   local pkg="$1" dir="$WORKDIR/$pkg"
@@ -29,6 +56,8 @@ build_one() {
   [[ -f "$dir/PKGBUILD" ]] || {
     printf '%s\tunavailable\tsource has no PKGBUILD\n' "$pkg" >> "$REPORT"; return
   }
+
+  apply_port_patches "$pkg" "$dir"
 
   # Many of Omarchy's PKGBUILDs build from source but were only ever tagged
   # x86_64. Adding aarch64 lets us find out whether they actually build; if the
@@ -54,9 +83,9 @@ build_one() {
     local why
     why=$(grep -iE "error|cannot|unable|not (available|supported)" "$log" | tail -1 | cut -c1-160)
     printf '%s\tfailed\t%s\n' "$pkg" "${why:-see $pkg.log}" >> "$REPORT"
-    cp "$log" /repo/ 2>/dev/null
     echo "  FAILED $pkg: ${why:-unknown}"
   fi
+  # Keep the log next to the report; drop the heavy intermediates.
   rm -rf "$dir/src" "$dir/pkg"
 }
 

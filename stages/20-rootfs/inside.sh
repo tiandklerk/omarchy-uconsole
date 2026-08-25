@@ -61,7 +61,8 @@ echo 'Server = http://mirror.archlinuxarm.org/$arch/$repo' > "$ROOTFS/etc/pacman
 inchroot 'pacman -Syu --noconfirm'
 
 say "installing base packages"
-mapfile -t PKGS < <(grep -vE '^\s*(#|$)' /src/packages/base.packages)
+mapfile -t PKGS < <(cat /src/packages/base.packages /src/packages/uconsole-extra.packages \
+                    | grep -vE '^\s*(#|$)' | sort -u)
 # Install in one transaction so pacman resolves conflicts once. --needed keeps
 # re-runs cheap; --ask=4 auto-answers the "replace X with Y" provider prompts.
 inchroot "pacman -S --noconfirm --needed base base-devel sudo networkmanager parted \
@@ -76,9 +77,6 @@ cp -a "/out/kernel/modules/$KREL" "$ROOTFS/usr/lib/modules/$KREL"
 # /boot and pull in an initramfs we do not use.
 inchroot 'pacman -Rdd --noconfirm linux-aarch64 || true'
 inchroot "depmod -a $KREL"
-
-say "installing Raspberry Pi firmware and wireless firmware"
-inchroot 'pacman -S --noconfirm --needed linux-firmware || true'
 
 # --- uConsole overlay ------------------------------------------------------
 say "applying uConsole overlay"
