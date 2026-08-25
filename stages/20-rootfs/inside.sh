@@ -35,7 +35,11 @@ mountpoint -q "$ROOTFS/proc"    || mount -t proc  proc  "$ROOTFS/proc"
 mountpoint -q "$ROOTFS/sys"     || mount -t sysfs sys   "$ROOTFS/sys"
 mountpoint -q "$ROOTFS/dev"     || mount -o bind  /dev  "$ROOTFS/dev"
 mountpoint -q "$ROOTFS/dev/pts" || mount -o bind  /dev/pts "$ROOTFS/dev/pts"
-cp -f /etc/resolv.conf "$ROOTFS/etc/resolv.conf"
+# Arch Linux ARM ships /etc/resolv.conf as a symlink into systemd-resolved's
+# runtime dir, which does not exist here - cp would refuse to write through
+# a dangling symlink and the chroot would have no DNS.
+rm -f "$ROOTFS/etc/resolv.conf"
+cp /etc/resolv.conf "$ROOTFS/etc/resolv.conf"
 
 inchroot() { chroot "$ROOTFS" /bin/bash -euo pipefail -c "$*"; }
 
@@ -48,6 +52,11 @@ say "disabling pacman's download sandbox"
 # repository section and pacman ignores it with only a warning.
 grep -q '^DisableSandbox' "$ROOTFS/etc/pacman.conf" || \
   sed -i '/^\[options\]/a DisableSandbox' "$ROOTFS/etc/pacman.conf"
+
+# pacman cannot work out the cachedir's mount point inside a chroot and then
+# concludes there is no free space. Arch's own pacstrap disables the check for
+# exactly this reason; it is restored before the image ships.
+sed -i 's/^CheckSpace/#CheckSpace/' "$ROOTFS/etc/pacman.conf"
 
 say "initialising pacman keyring"
 # gpg blocks on /dev/random under emulation; point it at the non-blocking pool.
@@ -113,6 +122,9 @@ inchroot 'systemctl enable uconsole-firstboot-resize.service'
 
 # ALARM's default network stack conflicts with NetworkManager.
 inchroot 'systemctl disable systemd-networkd systemd-resolved 2>/dev/null || true'
+
+say "restoring pacman's space check for the shipped system"
+sed -i 's/^#CheckSpace/CheckSpace/' "$ROOTFS/etc/pacman.conf"
 
 say "cleaning package cache"
 inchroot 'pacman -Scc --noconfirm >/dev/null 2>&1 || true'

@@ -20,9 +20,16 @@ mountpoint -q "$ROOTFS/sys"     || mount -t sysfs sys  "$ROOTFS/sys"
 mountpoint -q "$ROOTFS/dev"     || mount -o bind /dev  "$ROOTFS/dev"
 mountpoint -q "$ROOTFS/dev/pts" || mount -o bind /dev/pts "$ROOTFS/dev/pts"
 mountpoint -q "$ROOTFS/repo"    || mount -o bind /repo "$ROOTFS/repo"
-cp -f /etc/resolv.conf "$ROOTFS/etc/resolv.conf"
+# Arch Linux ARM ships /etc/resolv.conf as a symlink into systemd-resolved's
+# runtime dir, which does not exist here - cp would refuse to write through
+# a dangling symlink and the chroot would have no DNS.
+rm -f "$ROOTFS/etc/resolv.conf"
+cp /etc/resolv.conf "$ROOTFS/etc/resolv.conf"
 
 inchroot() { chroot "$ROOTFS" /bin/bash -euo pipefail -c "$*"; }
+
+# See stage 20: pacman's space check cannot resolve a mount point in a chroot.
+sed -i 's/^CheckSpace/#CheckSpace/' "$ROOTFS/etc/pacman.conf"
 
 # --- pacman repositories ---------------------------------------------------
 say "registering package repositories"
@@ -83,6 +90,9 @@ done
 
 say "enabling the display manager"
 inchroot 'systemctl enable sddm' || echo "  sddm not installed; Omarchy will start from a TTY"
+
+say "restoring pacman's space check for the shipped system"
+sed -i 's/^#CheckSpace/CheckSpace/' "$ROOTFS/etc/pacman.conf"
 
 inchroot 'pacman -Scc --noconfirm >/dev/null 2>&1' || true
 say "done"
