@@ -65,9 +65,27 @@ for stage in "${selected[@]}"; do
 done
 
 # A structural check is cheap and catches assembly mistakes that would
-# otherwise only show up as a uConsole that does not boot.
+# otherwise only show up as a uConsole that does not boot. Do it before
+# compressing, so a bad image is never sealed into a .xz.
 if [[ -f "$OUT_DIR/${IMG_NAME}.img" ]]; then
-  "$ROOT_DIR/bin/verify-image.sh" || warn "image verification reported problems"
+  if "$ROOT_DIR/bin/verify-image.sh"; then
+    if [[ "$IMG_COMPRESS" == "xz" ]]; then
+      step "compressing (this takes a while)"
+      rm -f "$OUT_DIR/${IMG_NAME}.img.xz"
+      # Without IMG_KEEP_RAW the raw image is replaced rather than duplicated,
+      # which halves the peak disk requirement.
+      if [[ "${IMG_KEEP_RAW:-0}" == "1" ]]; then
+        xz -T0 -6 --keep "$OUT_DIR/${IMG_NAME}.img"
+      else
+        xz -T0 -6 "$OUT_DIR/${IMG_NAME}.img"
+      fi
+      ok "compressed to $(du -h "$OUT_DIR/${IMG_NAME}.img.xz" | cut -f1)"
+    fi
+    ( cd "$OUT_DIR" && sha256sum "${IMG_NAME}.img"* > "${IMG_NAME}.sha256" )
+    ok "checksums written"
+  else
+    warn "image verification reported problems - not compressing"
+  fi
 fi
 
 step "done in $(( (SECONDS - started) / 60 ))m"

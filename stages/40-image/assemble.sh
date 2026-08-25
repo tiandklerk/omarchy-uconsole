@@ -111,13 +111,8 @@ umount "$MNT/boot"; umount "$MNT"; losetup -d "$LOOP"; LOOP=""
 
 say "image: $(du -h --apparent-size "$IMG" | cut -f1) apparent, $(du -h "$IMG" | cut -f1) on disk"
 
-if [[ "$IMG_COMPRESS" == "xz" ]]; then
-  say "compressing (this takes a while)"
-  rm -f "$IMG.xz"
-  xz -T0 -6 --keep "$IMG"
-  say "compressed: $(du -h "$IMG.xz" | cut -f1)"
-fi
-
-# sha256 so a flash can be verified against what we built.
-( cd /out && sha256sum "${IMG_NAME}.img"* > "${IMG_NAME}.sha256" )
-say "checksums written"
+# Compression is deliberately NOT done here. build.sh verifies the raw image
+# first - a structural check is worth far more before the artifact is sealed -
+# and compressing afterwards avoids holding a raw and a compressed copy at the
+# same time on a disk-constrained builder.
+say "assembled; run bin/verify-image.sh before compressing"
