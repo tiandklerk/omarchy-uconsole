@@ -36,6 +36,11 @@ require_file "$SRC/arch/arm/boot/dts/overlays/clockworkpi-uconsole-${UC_MODEL}-o
 require_file "$SRC/drivers/gpu/drm/panel/panel-cwu50.c" \
   "kernel tree has no CWU50 panel driver - wrong KERNEL_REPO/BRANCH?"
 
+# The kernel release comes out as e.g. 6.12.95-uconsole-cm5+. The trailing "+"
+# is scripts/setlocalversion marking a git working tree that is not a clean
+# tag; it is also the long-standing Raspberry Pi convention (6.1.21-v8+), so it
+# is kept rather than suppressed. It is part of the module directory name.
+
 build_image "$IMG_CROSS" "$HERE"
 
 mkdir -p "$OUT"
