@@ -16,6 +16,14 @@ cleanup() {
 }
 trap cleanup EXIT
 
+if [[ "$IMG_SIZE_MB" == "auto" ]]; then
+  # du reports the rootfs as it sits on the build host; ext4 metadata and the
+  # journal add a few percent on top, hence the 1.08 factor.
+  used_mb=$(du -sm --exclude=proc --exclude=sys --exclude=dev --exclude=repo "$ROOTFS" | cut -f1)
+  IMG_SIZE_MB=$(( used_mb * 108 / 100 + BOOT_SIZE_MB + IMG_HEADROOM_MB ))
+  say "rootfs is ${used_mb} MiB; sizing image to ${IMG_SIZE_MB} MiB"
+fi
+
 say "creating ${IMG_SIZE_MB} MiB image"
 rm -f "$IMG"
 # Sparse: the file only occupies what is actually written, so a 9 GiB image

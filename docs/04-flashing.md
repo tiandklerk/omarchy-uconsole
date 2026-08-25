@@ -8,9 +8,11 @@ out/omarchy-uconsole-cm5.img        uncompressed
 out/omarchy-uconsole-cm5.sha256     checksums for both
 ```
 
-The image is ~9 GiB uncompressed and needs a card of at least that size. Root is
-grown to fill the card on first boot, so a larger card is fine and needs no
-action.
+The image is sized to the installed system plus about 1.5 GiB of headroom, so
+its size depends on how many packages built for aarch64 — expect somewhere
+between 8 and 16 GiB uncompressed. `ls -lh out/` tells you. Use a card at least
+that large; root is grown to fill whatever card it lands on during first boot,
+so bigger is fine and needs no action.
 
 ## Verify first
 

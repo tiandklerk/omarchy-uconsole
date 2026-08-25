@@ -40,6 +40,15 @@ cp -f /etc/resolv.conf "$ROOTFS/etc/resolv.conf"
 inchroot() { chroot "$ROOTFS" /bin/bash -euo pipefail -c "$*"; }
 
 # --- pacman ----------------------------------------------------------------
+say "disabling pacman's download sandbox"
+# pacman 7 confines downloads with Landlock, running them as the 'alpm' user.
+# Inside an emulated chroot that fails ("Landlock is not supported by the
+# kernel") and every sync errors out. Harmless to disable in a build chroot.
+# It has to be inside [options]; appended at the end of the file it lands in a
+# repository section and pacman ignores it with only a warning.
+grep -q '^DisableSandbox' "$ROOTFS/etc/pacman.conf" || \
+  sed -i '/^\[options\]/a DisableSandbox' "$ROOTFS/etc/pacman.conf"
+
 say "initialising pacman keyring"
 # gpg blocks on /dev/random under emulation; point it at the non-blocking pool.
 mkdir -p "$ROOTFS/etc/pacman.d/gnupg"

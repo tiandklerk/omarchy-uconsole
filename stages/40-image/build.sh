@@ -13,7 +13,8 @@ source "$HERE/../../bin/lib.sh"
 step "Stage 40: image"
 require_file "$WORK_DIR/rootfs/.extracted" "stage 20 has not run - no rootfs"
 require_file "$OUT_DIR/kernel/$KERNEL_IMAGE_NAME" "stage 10 has not run - no kernel"
-require_disk_gb $(( IMG_SIZE_MB / 1024 + 3 )) "$OUT_DIR"
+# The image is sparse, so what it costs on disk is roughly the rootfs size.
+require_disk_gb 8 "$OUT_DIR"
 
 mkdir -p "$OUT_DIR"
 build_image "$IMG_ALARM" "$HERE/../20-rootfs"
@@ -25,6 +26,7 @@ run_in_root "$IMG_ALARM" \
   -v "$HERE/../..:/src:ro" \
   -e "IMG_NAME=$IMG_NAME" \
   -e "IMG_SIZE_MB=$IMG_SIZE_MB" \
+  -e "IMG_HEADROOM_MB=$IMG_HEADROOM_MB" \
   -e "BOOT_SIZE_MB=$BOOT_SIZE_MB" \
   -e "KERNEL_IMAGE_NAME=$KERNEL_IMAGE_NAME" \
   -e "IMG_COMPRESS=$IMG_COMPRESS" \
