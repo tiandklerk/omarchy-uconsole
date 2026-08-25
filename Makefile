@@ -1,11 +1,14 @@
 # Convenience wrapper around build.sh. See README.md.
-.PHONY: all kernel rootfs omarchy image triage docs clean distclean binfmt
+.PHONY: all kernel rootfs omarchy image verify triage docs clean distclean binfmt
 
 all:        ; ./build.sh
 kernel:     ; ./build.sh kernel
 rootfs:     ; ./build.sh rootfs
 omarchy:    ; ./build.sh omarchy
 image:      ; ./build.sh image
+
+## Assert the built image is structurally bootable (no hardware needed).
+verify:     ; ./bin/verify-image.sh
 
 ## Re-run the aarch64 package triage and regenerate the docs it feeds.
 triage:

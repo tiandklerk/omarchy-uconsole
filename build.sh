@@ -64,5 +64,11 @@ for stage in "${selected[@]}"; do
   ok "stage '$stage' finished in $(( (SECONDS - s0) / 60 ))m $(( (SECONDS - s0) % 60 ))s"
 done
 
+# A structural check is cheap and catches assembly mistakes that would
+# otherwise only show up as a uConsole that does not boot.
+if [[ -f "$OUT_DIR/${IMG_NAME}.img" ]]; then
+  "$ROOT_DIR/bin/verify-image.sh" || warn "image verification reported problems"
+fi
+
 step "done in $(( (SECONDS - started) / 60 ))m"
 [[ -d "$OUT_DIR" ]] && ls -lh "$OUT_DIR"/*.img* 2>/dev/null | sed 's/^/    /'
