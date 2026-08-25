@@ -125,7 +125,12 @@ What actually happened the last time stage 30 ran on this machine.
 
 | Package | Status | Detail |
 |---|---|---|
-| `omarchy-settings` | failed | ==> ERROR: Could not resolve all dependencies. |
+| `ttf-jetbrains-mono-nerd-basic` | built | ttf-jetbrains-mono-nerd-basic-3.5.0-1-any.pkg.tar.zst  |
+| `omarchy-settings` | built | omarchy-settings-4.0.1-1-any.pkg.tar.zst  (from a previous run) |
+| `omarchy` | built | omarchy-4.0.1-1-any.pkg.tar.zst  |
+| `aether` | built | aether-4.29.4-1-aarch64.pkg.tar.zst  (from a previous run) |
+| `cliamp` | built | cliamp-1.63.2-1-aarch64.pkg.tar.zst  (from a previous run) |
+| `dotnet-runtime` | unavailable | source has no PKGBUILD |
 
 A package that failed here is simply absent from the image; the rest
 of Omarchy is unaffected.

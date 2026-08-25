@@ -12,10 +12,17 @@ uConsole is.
 ./build.sh          # → out/omarchy-uconsole-cm5.img.xz
 ```
 
-> **Status: built, not yet booted.** Every stage runs and produces artifacts on
-> an x86_64 Linux host. Nothing in here has been booted on real hardware yet.
-> See [docs/05-first-boot.md](docs/05-first-boot.md) for what to check first and
-> what is most likely to be wrong.
+> **Status: image built and verified, not yet booted.** The full pipeline has
+> run end to end on an x86_64 host and produced a flashable image that passes
+> all 19 structural checks in `bin/verify-image.sh` — the uConsole overlay is on
+> the boot partition, `config.txt` selects it, `root=PARTUUID` resolves to the
+> real root partition, and the panel/backlight modules and Omarchy are in the
+> rootfs.
+>
+> **It has not been booted on hardware.** Verification proves the image is
+> assembled correctly; it cannot prove the panel lights up. See
+> [docs/05-first-boot.md](docs/05-first-boot.md) for the checklist and the
+> things most likely to be wrong.
 
 ## What this actually does
 
@@ -26,7 +33,7 @@ Four stages, each resumable:
 | `10-kernel` | A 6.12 kernel cross-compiled from [ak-rex/rpi-linux](https://github.com/ak-rex/rpi-linux) with the uConsole panel, backlight, keyboard and PMIC drivers, plus the `clockworkpi-uconsole-cm5` device-tree overlay |
 | `20-rootfs` | An Arch Linux ARM aarch64 root filesystem with the 136 Omarchy packages that already exist for aarch64 |
 | `30-omarchy` | The ~27 Omarchy packages that *don't* exist for aarch64, built under emulation, then Omarchy installed |
-| `40-image` | A two-partition `.img`, checksummed and xz-compressed |
+| `40-image` | A two-partition `.img`, verified and checksummed (xz optional) |
 
 ## Requirements
 
