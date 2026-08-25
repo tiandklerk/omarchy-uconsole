@@ -102,9 +102,20 @@ reason. See [05-first-boot.md](05-first-boot.md).
 
 ## WiFi and Bluetooth
 
-The CM5's on-board Broadcom radio via `brcmfmac`, with firmware from
-`linux-firmware`. No DKMS module and no `broadcom-wl` — that package is x86-only
-and unnecessary here.
+The CM5's on-board Broadcom/Cypress CYW43455 via `brcmfmac`. No DKMS module and
+no `broadcom-wl` — that package is x86-only and unnecessary here.
+
+**WiFi** works from `linux-firmware`, which carries both the chip firmware
+(`brcmfmac43455-sdio.bin`) and — importantly — the board-specific NVRAM for this
+exact module, `brcmfmac43455-sdio.raspberrypi,5-compute-module.txt`. Without a
+matching NVRAM file the radio does not come up, so this was verified explicitly
+rather than assumed.
+
+**Bluetooth needs a blob Arch does not ship.** The CYW43455's Bluetooth side
+loads `BCM4345C0.hcd`, which Raspberry Pi distributes separately (in
+`RPi-Distro/bluez-firmware`) and which is absent from Arch's `linux-firmware` —
+so wifi would work and Bluetooth would silently not. Stage 20 fetches
+`BCM4345C0.hcd` and `BCM4345C5.hcd` into `/usr/lib/firmware/brcm/`.
 
 **`dtparam=ant2` matters.** It selects the external antenna connector fitted in
 the uConsole shell instead of the module's on-board antenna. Without it, range

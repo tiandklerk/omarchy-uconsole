@@ -87,6 +87,24 @@ cp -a "/out/kernel/modules/$KREL" "$ROOTFS/usr/lib/modules/$KREL"
 inchroot 'pacman -Rdd --noconfirm linux-aarch64 || true'
 inchroot "depmod -a $KREL"
 
+# --- Raspberry Pi Bluetooth firmware ---------------------------------------
+# The CM5's Bluetooth is a Broadcom/Cypress CYW43455, whose firmware blob
+# (BCM4345C0.hcd) Raspberry Pi ships separately and Arch's linux-firmware does
+# not carry - it has the *wifi* NVRAM for this board
+# (brcmfmac43455-sdio.raspberrypi,5-compute-module.txt) but no .hcd, so wifi
+# would work and Bluetooth would silently not.
+say "installing Raspberry Pi Bluetooth firmware"
+BT_BASE="https://raw.githubusercontent.com/RPi-Distro/bluez-firmware/master/broadcom"
+mkdir -p "$ROOTFS/usr/lib/firmware/brcm"
+for blob in BCM4345C0.hcd BCM4345C5.hcd; do
+  if [[ ! -s /cache/$blob ]]; then
+    curl -sfL --retry 3 --max-time 120 "$BT_BASE/$blob" -o "/cache/$blob.part" \
+      && mv "/cache/$blob.part" "/cache/$blob" || { echo "  could not fetch $blob"; continue; }
+  fi
+  install -Dm644 "/cache/$blob" "$ROOTFS/usr/lib/firmware/brcm/$blob"
+  echo "  installed $blob"
+done
+
 # --- uConsole overlay ------------------------------------------------------
 say "applying uConsole overlay"
 # --chown=root:root is essential: rsync -a applies the SOURCE directory's
