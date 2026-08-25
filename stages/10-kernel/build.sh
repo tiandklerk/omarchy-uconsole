@@ -43,15 +43,16 @@ KBUILD="$WORK_DIR/kbuild"          # out-of-tree build dir, keeps $SRC pristine
 MODROOT="$WORK_DIR/kmodules"
 mkdir -p "$KBUILD" "$MODROOT"
 
+# The version suffix is passed as UC_LOCALVERSION, deliberately NOT as
+# LOCALVERSION: the kernel Makefile appends an environment LOCALVERSION on top
+# of CONFIG_LOCALVERSION, which silently doubles the suffix and yields
+# 6.12.95-uconsole-cm5-uconsole-cm5.
 run_in "$IMG_CROSS" \
   -v "$SRC:/build/src:ro" \
   -v "$KBUILD:/build/out" \
   -v "$MODROOT:/build/modroot" \
   -v "$HERE:/build/stage:ro" \
   -e "DEFCONFIG=$DEFCONFIG" \
-  # NOT named LOCALVERSION: the kernel Makefile appends an environment
-  # LOCALVERSION on top of CONFIG_LOCALVERSION, which silently doubles the
-  # suffix (6.12.95-uconsole-cm5-uconsole-cm5).
   -e "UC_LOCALVERSION=$KERNEL_LOCALVERSION" \
   -e "JOBS=$JOBS" \
   -- \
