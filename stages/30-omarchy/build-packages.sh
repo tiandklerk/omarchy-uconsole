@@ -30,14 +30,19 @@ refresh_local_repo() {
     rm -f uconsole-local.db* uconsole-local.files*
     if compgen -G "*.pkg.tar."* > /dev/null; then
       repo-add --quiet uconsole-local.db.tar.gz *.pkg.tar.* >/dev/null 2>&1
+    else
+      # repo-add refuses to create an empty database, but pacman treats a
+      # missing db as a hard sync failure and then resolves NO dependencies at
+      # all - which looks exactly like a broken PKGBUILD. Hand-roll an empty
+      # one so the repo is always valid, including before the first build.
+      tar czf uconsole-local.db.tar.gz -T /dev/null
+      ln -sf uconsole-local.db.tar.gz uconsole-local.db
     fi
   )
   sudo pacman -Sy --noconfirm >/dev/null 2>&1 || true
 }
 
-# An empty repo makes pacman -Sy fail on the missing db, so seed it first.
 refresh_local_repo
-sudo pacman -Sy --noconfirm >/dev/null 2>&1 || true
 
 printf 'package\tstatus\tdetail\n' > "$REPORT"
 

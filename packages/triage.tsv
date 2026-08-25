@@ -199,7 +199,6 @@ vulkan-radeon	drop	omarchy-other	no AMD GPU on a CM5
 vulkan-asahi	drop	omarchy-other	Apple Silicon GPU driver; wrong ARM platform
 linux-firmware-marvell	drop	omarchy-other	Microsoft Surface wifi firmware
 dell-xps-touchpad-haptics	drop	omarchy-other	Dell XPS hardware
-dell-xps13-sidecar-amps	drop	omarchy-other	Dell XPS hardware
 lsp-plugins-lv2	alarm	omarchy-other	in Arch Linux ARM aarch64 repos
 apple-bcm-firmware	drop	omarchy-other	Apple T2 MacBook firmware
 apple-t2-audio-config	drop	omarchy-other	Apple T2 MacBook audio

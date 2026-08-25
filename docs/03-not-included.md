@@ -11,7 +11,7 @@ and `packages/excluded.packages`. Don't edit it by hand.
 | Verdict | Count |
 |---|---|
 | Already in Arch Linux ARM aarch64 | 136 |
-| Dropped (see below) | 45 |
+| Dropped (see below) | 44 |
 | Built here from omarchy-pkgs | 20 |
 | Built here from the AUR | 7 |
 
@@ -48,7 +48,6 @@ Every package below is in Omarchy's own lists and deliberately excluded.
 | `broadcom-wl` | x86 DKMS Broadcom driver; the CM5 uses the in-kernel brcmfmac driver |
 | `btrfs-progs` | not used; root filesystem is ext4 so it can be grown in place on first boot |
 | `ddcutil` | DDC/CI control for external monitors over I2C; the internal DSI panel has no DDC |
-| `dell-xps13-sidecar-amps` | Dell XPS hardware |
 | `dell-xps-touchpad-haptics` | Dell XPS hardware |
 | `intel-ipu7-camera` | Intel IPU7 camera stack; x86-only |
 | `intel-lpmd` | Intel low-power daemon; x86-only |
@@ -122,6 +121,11 @@ These do not exist in the Arch Linux ARM repositories, so stage 30 builds them.
 
 ## Build results
 
-Stage 30 has not been run on this checkout yet. Once it has,
-`bin/gen-not-included.sh` adds a table here recording which of the packages
-above actually built for aarch64 and which failed.
+What actually happened the last time stage 30 ran on this machine.
+
+| Package | Status | Detail |
+|---|---|---|
+| `omarchy-settings` | failed | ==> ERROR: Could not resolve all dependencies. |
+
+A package that failed here is simply absent from the image; the rest
+of Omarchy is unaffected.
