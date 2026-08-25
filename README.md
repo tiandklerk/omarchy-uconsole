@@ -71,6 +71,7 @@ size, hostname, default user, CM4 vs CM5.
 - [Hardware](docs/02-hardware.md) — what the uConsole actually is, driver by driver
 - [What's not included](docs/03-not-included.md) — every dropped package and why
 - [Flashing](docs/04-flashing.md)
+- [Adding the optional packages](docs/07-adding-packages.md)
 - [First boot & testing](docs/05-first-boot.md)
 - [Research notes](docs/06-research-notes.md) — the findings this design rests on
 
