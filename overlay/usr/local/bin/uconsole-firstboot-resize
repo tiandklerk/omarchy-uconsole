@@ -1,0 +1,28 @@
+#!/bin/bash
+# Grow the root partition and filesystem to fill the SD card / eMMC.
+#
+# The shipped image is deliberately small so it compresses and flashes fast;
+# this reclaims the rest of the card the first time the device boots.
+set -euo pipefail
+
+root_part="$(findmnt -no SOURCE /)"
+[[ -n "$root_part" ]] || exit 0
+
+# /dev/mmcblk0p2 -> disk /dev/mmcblk0, partition 2
+disk="/dev/$(lsblk -no PKNAME "$root_part")"
+partnum="$(cat "/sys/class/block/$(basename "$root_part")/partition")"
+
+echo "growing $root_part (partition $partnum on $disk)"
+# growpart and resize2fs are both no-ops if there is nothing to reclaim.
+if command -v growpart >/dev/null 2>&1; then
+  growpart "$disk" "$partnum" || true
+else
+  # parted's resizepart needs the end explicitly; 100% means "to end of disk".
+  parted -s -m "$disk" resizepart "$partnum" 100% || true
+fi
+partprobe "$disk" || true
+resize2fs "$root_part" || true
+
+mkdir -p /var/lib/uconsole
+touch /var/lib/uconsole/firstboot-resize-done
+echo "root filesystem resized"

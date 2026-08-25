@@ -1,0 +1,209 @@
+package	verdict	source_list	reason
+aether	omarchy	omarchy-base	omarchy-pkgs PKGBUILD; must be built for aarch64
+alsa-utils	alarm	omarchy-base	in Arch Linux ARM aarch64 repos
+asdcontrol	drop	omarchy-base	Apple Studio Display brightness control
+avahi	alarm	omarchy-base	in Arch Linux ARM aarch64 repos
+bash-completion	alarm	omarchy-base	in Arch Linux ARM aarch64 repos
+bat	alarm	omarchy-base	in Arch Linux ARM aarch64 repos
+bluez	alarm	omarchy-base	in Arch Linux ARM aarch64 repos
+bluez-tools	alarm	omarchy-base	in Arch Linux ARM aarch64 repos
+bluez-utils	alarm	omarchy-base	in Arch Linux ARM aarch64 repos
+bolt	drop	omarchy-base	Thunderbolt device manager; the CM5 has no Thunderbolt
+brightnessctl	alarm	omarchy-base	in Arch Linux ARM aarch64 repos
+btop	alarm	omarchy-base	in Arch Linux ARM aarch64 repos
+chromium	alarm	omarchy-base	in Arch Linux ARM aarch64 repos
+clang	alarm	omarchy-base	in Arch Linux ARM aarch64 repos
+cliamp	omarchy	omarchy-base	omarchy-pkgs PKGBUILD; must be built for aarch64
+cups	alarm	omarchy-base	in Arch Linux ARM aarch64 repos
+cups-browsed	alarm	omarchy-base	in Arch Linux ARM aarch64 repos
+cups-filters	alarm	omarchy-base	in Arch Linux ARM aarch64 repos
+cups-pdf	alarm	omarchy-base	in Arch Linux ARM aarch64 repos
+ddcutil	drop	omarchy-base	DDC/CI control for external monitors over I2C; the internal DSI panel has no DDC
+docker	alarm	omarchy-base	in Arch Linux ARM aarch64 repos
+docker-buildx	alarm	omarchy-base	in Arch Linux ARM aarch64 repos
+docker-compose	alarm	omarchy-base	in Arch Linux ARM aarch64 repos
+dosfstools	alarm	omarchy-base	in Arch Linux ARM aarch64 repos
+dotnet-runtime	aur	omarchy-base	not in aarch64 repos or omarchy-pkgs; AUR build required
+dua-cli	alarm	omarchy-base	in Arch Linux ARM aarch64 repos
+evince	alarm	omarchy-base	in Arch Linux ARM aarch64 repos
+exfatprogs	alarm	omarchy-base	in Arch Linux ARM aarch64 repos
+expac	alarm	omarchy-base	in Arch Linux ARM aarch64 repos
+eza	alarm	omarchy-base	in Arch Linux ARM aarch64 repos
+fakeroot	alarm	omarchy-base	in Arch Linux ARM aarch64 repos
+fastfetch	alarm	omarchy-base	in Arch Linux ARM aarch64 repos
+fcitx5	alarm	omarchy-base	in Arch Linux ARM aarch64 repos
+fcitx5-gtk	alarm	omarchy-base	in Arch Linux ARM aarch64 repos
+fcitx5-qt	alarm	omarchy-base	in Arch Linux ARM aarch64 repos
+fd	alarm	omarchy-base	in Arch Linux ARM aarch64 repos
+ffmpegthumbnailer	alarm	omarchy-base	in Arch Linux ARM aarch64 repos
+fontconfig	alarm	omarchy-base	in Arch Linux ARM aarch64 repos
+foot	alarm	omarchy-base	in Arch Linux ARM aarch64 repos
+fzf	alarm	omarchy-base	in Arch Linux ARM aarch64 repos
+git	alarm	omarchy-base	in Arch Linux ARM aarch64 repos
+gnome-keyring	alarm	omarchy-base	in Arch Linux ARM aarch64 repos
+gnome-themes-extra	alarm	omarchy-base	in Arch Linux ARM aarch64 repos
+grim	alarm	omarchy-base	in Arch Linux ARM aarch64 repos
+gpu-screen-recorder	alarm	omarchy-base	in Arch Linux ARM aarch64 repos
+gum	alarm	omarchy-base	in Arch Linux ARM aarch64 repos
+gvfs-mtp	alarm	omarchy-base	in Arch Linux ARM aarch64 repos
+gvfs-nfs	alarm	omarchy-base	in Arch Linux ARM aarch64 repos
+gvfs-smb	alarm	omarchy-base	in Arch Linux ARM aarch64 repos
+herdr	omarchy	omarchy-base	omarchy-pkgs PKGBUILD; must be built for aarch64
+hyprland	alarm	omarchy-base	in Arch Linux ARM aarch64 repos
+hyprland-guiutils	alarm	omarchy-base	in Arch Linux ARM aarch64 repos
+hyprland-preview-share-picker	omarchy	omarchy-base	omarchy-pkgs PKGBUILD; must be built for aarch64
+hyprpicker	alarm	omarchy-base	in Arch Linux ARM aarch64 repos
+hyprsunset	alarm	omarchy-base	in Arch Linux ARM aarch64 repos
+imagemagick	alarm	omarchy-base	in Arch Linux ARM aarch64 repos
+imv	alarm	omarchy-base	in Arch Linux ARM aarch64 repos
+inetutils	alarm	omarchy-base	in Arch Linux ARM aarch64 repos
+inotify-tools	alarm	omarchy-base	in Arch Linux ARM aarch64 repos
+inxi	alarm	omarchy-base	in Arch Linux ARM aarch64 repos
+networkmanager	alarm	omarchy-base	in Arch Linux ARM aarch64 repos
+jq	alarm	omarchy-base	in Arch Linux ARM aarch64 repos
+kdenlive	alarm	omarchy-base	in Arch Linux ARM aarch64 repos
+kernel-modules-hook	alarm	omarchy-base	in Arch Linux ARM aarch64 repos
+lazydocker	alarm	omarchy-base	in Arch Linux ARM aarch64 repos
+lazygit	alarm	omarchy-base	in Arch Linux ARM aarch64 repos
+less	alarm	omarchy-base	in Arch Linux ARM aarch64 repos
+libsecret	alarm	omarchy-base	in Arch Linux ARM aarch64 repos
+libvips	alarm	omarchy-base	in Arch Linux ARM aarch64 repos
+libyaml	alarm	omarchy-base	in Arch Linux ARM aarch64 repos
+libreoffice-fresh	alarm	omarchy-base	in Arch Linux ARM aarch64 repos
+llvm	alarm	omarchy-base	in Arch Linux ARM aarch64 repos
+localsend	omarchy	omarchy-base	omarchy-pkgs PKGBUILD; must be built for aarch64
+lua51	alarm	omarchy-base	in Arch Linux ARM aarch64 repos
+luarocks	alarm	omarchy-base	in Arch Linux ARM aarch64 repos
+man-db	alarm	omarchy-base	in Arch Linux ARM aarch64 repos
+mariadb-libs	alarm	omarchy-base	in Arch Linux ARM aarch64 repos
+mise-bin	omarchy	omarchy-base	omarchy-pkgs PKGBUILD; must be built for aarch64
+moonlight-qt	alarm	omarchy-base	in Arch Linux ARM aarch64 repos
+mpv	alarm	omarchy-base	in Arch Linux ARM aarch64 repos
+mpv-mpris	alarm	omarchy-base	in Arch Linux ARM aarch64 repos
+nautilus	alarm	omarchy-base	in Arch Linux ARM aarch64 repos
+nautilus-python	alarm	omarchy-base	in Arch Linux ARM aarch64 repos
+gnome-disk-utility	alarm	omarchy-base	in Arch Linux ARM aarch64 repos
+noto-fonts	alarm	omarchy-base	in Arch Linux ARM aarch64 repos
+noto-fonts-cjk	alarm	omarchy-base	in Arch Linux ARM aarch64 repos
+noto-fonts-emoji	alarm	omarchy-base	in Arch Linux ARM aarch64 repos
+nss-mdns	alarm	omarchy-base	in Arch Linux ARM aarch64 repos
+nvim	aur	omarchy-base	not in aarch64 repos or omarchy-pkgs; AUR build required
+obs-studio	aur	omarchy-base	not in aarch64 repos or omarchy-pkgs; AUR build required
+obsidian	aur	omarchy-base	not in aarch64 repos or omarchy-pkgs; AUR build required
+omacalc	omarchy	omarchy-base	omarchy-pkgs PKGBUILD; must be built for aarch64
+omacut	omarchy	omarchy-base	omarchy-pkgs PKGBUILD; must be built for aarch64
+omawrite	omarchy	omarchy-base	omarchy-pkgs PKGBUILD; must be built for aarch64
+omarchy-nvim	omarchy	omarchy-base	omarchy-pkgs PKGBUILD; must be built for aarch64
+pacman-contrib	alarm	omarchy-base	in Arch Linux ARM aarch64 repos
+pamixer	alarm	omarchy-base	in Arch Linux ARM aarch64 repos
+pinta	aur	omarchy-base	not in aarch64 repos or omarchy-pkgs; AUR build required
+plocate	alarm	omarchy-base	in Arch Linux ARM aarch64 repos
+plymouth	alarm	omarchy-base	in Arch Linux ARM aarch64 repos
+postgresql-libs	alarm	omarchy-base	in Arch Linux ARM aarch64 repos
+power-profiles-daemon	alarm	omarchy-base	in Arch Linux ARM aarch64 repos
+python-gobject	alarm	omarchy-base	in Arch Linux ARM aarch64 repos
+python-poetry-core	alarm	omarchy-base	in Arch Linux ARM aarch64 repos
+ttfx	omarchy	omarchy-base	omarchy-pkgs PKGBUILD; must be built for aarch64
+qemu-user-static-binfmt	aur	omarchy-base	not in aarch64 repos or omarchy-pkgs; AUR build required
+qrencode	alarm	omarchy-base	in Arch Linux ARM aarch64 repos
+qt6-imageformats	alarm	omarchy-base	in Arch Linux ARM aarch64 repos
+quickshell	alarm	omarchy-base	in Arch Linux ARM aarch64 repos
+ripgrep	alarm	omarchy-base	in Arch Linux ARM aarch64 repos
+ruby	alarm	omarchy-base	in Arch Linux ARM aarch64 repos
+tensaku	omarchy	omarchy-base	omarchy-pkgs PKGBUILD; must be built for aarch64
+sddm	alarm	omarchy-base	in Arch Linux ARM aarch64 repos
+slurp	alarm	omarchy-base	in Arch Linux ARM aarch64 repos
+socat	alarm	omarchy-base	in Arch Linux ARM aarch64 repos
+starship	alarm	omarchy-base	in Arch Linux ARM aarch64 repos
+sushi	alarm	omarchy-base	in Arch Linux ARM aarch64 repos
+system-config-printer	alarm	omarchy-base	in Arch Linux ARM aarch64 repos
+tesseract	alarm	omarchy-base	in Arch Linux ARM aarch64 repos
+tesseract-data-eng	alarm	omarchy-base	in Arch Linux ARM aarch64 repos
+tldr	alarm	omarchy-base	in Arch Linux ARM aarch64 repos
+tree-sitter-cli	alarm	omarchy-base	in Arch Linux ARM aarch64 repos
+tmux	alarm	omarchy-base	in Arch Linux ARM aarch64 repos
+tobi-try	omarchy	omarchy-base	omarchy-pkgs PKGBUILD; must be built for aarch64
+ttf-ia-writer	omarchy	omarchy-base	omarchy-pkgs PKGBUILD; must be built for aarch64
+ttf-jetbrains-mono-nerd-basic	omarchy	omarchy-base	omarchy-pkgs PKGBUILD; must be built for aarch64
+tzupdate	omarchy	omarchy-base	omarchy-pkgs PKGBUILD; must be built for aarch64
+udiskie	alarm	omarchy-base	in Arch Linux ARM aarch64 repos
+ufw	alarm	omarchy-base	in Arch Linux ARM aarch64 repos
+ufw-docker	omarchy	omarchy-base	omarchy-pkgs PKGBUILD; must be built for aarch64
+unzip	alarm	omarchy-base	in Arch Linux ARM aarch64 repos
+usage	alarm	omarchy-base	in Arch Linux ARM aarch64 repos
+uwsm	alarm	omarchy-base	in Arch Linux ARM aarch64 repos
+whois	alarm	omarchy-base	in Arch Linux ARM aarch64 repos
+wireless-regdb	alarm	omarchy-base	in Arch Linux ARM aarch64 repos
+wireplumber	alarm	omarchy-base	in Arch Linux ARM aarch64 repos
+wl-clipboard	alarm	omarchy-base	in Arch Linux ARM aarch64 repos
+wtype	alarm	omarchy-base	in Arch Linux ARM aarch64 repos
+woff2-font-awesome	alarm	omarchy-base	in Arch Linux ARM aarch64 repos
+xdg-desktop-portal-gtk	alarm	omarchy-base	in Arch Linux ARM aarch64 repos
+xdg-desktop-portal-hyprland	alarm	omarchy-base	in Arch Linux ARM aarch64 repos
+xdg-terminal-exec	omarchy	omarchy-base	omarchy-pkgs PKGBUILD; must be built for aarch64
+xournalpp	alarm	omarchy-base	in Arch Linux ARM aarch64 repos
+yaru-icon-theme	omarchy	omarchy-base	omarchy-pkgs PKGBUILD; must be built for aarch64
+yay	omarchy	omarchy-base	omarchy-pkgs PKGBUILD; must be built for aarch64
+yt-dlp	alarm	omarchy-base	in Arch Linux ARM aarch64 repos
+zbar	alarm	omarchy-base	in Arch Linux ARM aarch64 repos
+zoxide	alarm	omarchy-base	in Arch Linux ARM aarch64 repos
+autoconf-archive	alarm	omarchy-other	in Arch Linux ARM aarch64 repos
+asusctl	drop	omarchy-other	ASUS laptop firmware control
+base	alarm	omarchy-other	in Arch Linux ARM aarch64 repos
+base-devel	alarm	omarchy-other	in Arch Linux ARM aarch64 repos
+broadcom-wl	drop	omarchy-other	x86 DKMS Broadcom driver; the CM5 uses the in-kernel brcmfmac driver
+btrfs-progs	drop	omarchy-other	not used; root filesystem is ext4 so it can be grown in place on first boot
+dkms	alarm	omarchy-other	in Arch Linux ARM aarch64 repos
+egl-wayland	alarm	omarchy-other	in Arch Linux ARM aarch64 repos
+gst-plugin-pipewire	alarm	omarchy-other	in Arch Linux ARM aarch64 repos
+gtk4-layer-shell	alarm	omarchy-other	in Arch Linux ARM aarch64 repos
+libpulse	alarm	omarchy-other	in Arch Linux ARM aarch64 repos
+intel-ipu7-camera	drop	omarchy-other	Intel IPU7 camera stack; x86-only
+intel-lpmd	drop	omarchy-other	Intel low-power daemon; x86-only
+intel-media-driver	drop	omarchy-other	Intel GPU video acceleration; x86-only
+libva-intel-driver	drop	omarchy-other	Intel GPU video acceleration; x86-only
+libva-nvidia-driver	drop	omarchy-other	no NVIDIA GPU on a CM5
+limine	drop	omarchy-other	x86 BIOS/UEFI bootloader; the CM5 boots via Raspberry Pi firmware and config.txt
+limine-mkinitcpio-hook	drop	omarchy-other	depends on limine
+limine-snapper-sync	drop	omarchy-other	depends on limine; boot-menu snapshot rollback is not available
+linux	drop	omarchy-other	replaced by our uConsole kernel (stage 10)
+linux-firmware	drop	omarchy-other	Microsoft Surface wifi firmware
+linux-headers	drop	omarchy-other	replaced by our uConsole kernel headers
+linux-ptl	drop	omarchy-other	Intel Panther Lake kernel; x86-only
+linux-ptl-headers	drop	omarchy-other	Intel Panther Lake kernel; x86-only
+macbook12-spi-driver-dkms	drop	omarchy-other	Apple MacBook SPI keyboard
+nvidia-580xx-dkms	drop	omarchy-other	no NVIDIA GPU on a CM5
+nvidia-dkms	drop	omarchy-other	no NVIDIA GPU on a CM5
+nvidia-open-dkms	drop	omarchy-other	no NVIDIA GPU on a CM5
+nvidia-580xx-utils	drop	omarchy-other	no NVIDIA GPU on a CM5
+nvidia-utils	drop	omarchy-other	no NVIDIA GPU on a CM5
+lib32-nvidia-580xx-utils	drop	omarchy-other	no NVIDIA GPU, and no 32-bit multilib on aarch64
+lib32-nvidia-utils	drop	omarchy-other	no NVIDIA GPU, and no 32-bit multilib on aarch64
+pipewire	alarm	omarchy-other	in Arch Linux ARM aarch64 repos
+pipewire-alsa	alarm	omarchy-other	in Arch Linux ARM aarch64 repos
+pipewire-jack	alarm	omarchy-other	in Arch Linux ARM aarch64 repos
+pipewire-pulse	alarm	omarchy-other	in Arch Linux ARM aarch64 repos
+qt6-wayland	alarm	omarchy-other	in Arch Linux ARM aarch64 repos
+snapper	drop	omarchy-other	Omarchy's snapshot story is limine + btrfs rollback entries; we ship ext4 (see docs/03-not-included.md)
+sof-firmware	alarm	omarchy-other	in Arch Linux ARM aarch64 repos
+thermald	drop	omarchy-other	Intel thermal daemon; x86-only (the CM5 uses the RPi thermal driver)
+webp-pixbuf-loader	alarm	omarchy-other	in Arch Linux ARM aarch64 repos
+yay-debug	aur	omarchy-other	not in aarch64 repos or omarchy-pkgs; AUR build required
+tuxedo-drivers-nocompatcheck-dkms	drop	omarchy-other	TUXEDO laptop drivers
+yt6801-dkms	drop	omarchy-other	Motorcomm YT6801 PCIe ethernet; not present on a uConsole
+zram-generator	alarm	omarchy-other	in Arch Linux ARM aarch64 repos
+libvpl	drop	omarchy-other	Intel oneVPL video encode/decode; x86-only
+vpl-gpu-rt	drop	omarchy-other	Intel oneVPL runtime; x86-only
+vulkan-intel	drop	omarchy-other	no Intel GPU on a CM5
+vulkan-radeon	drop	omarchy-other	no AMD GPU on a CM5
+vulkan-asahi	drop	omarchy-other	Apple Silicon GPU driver; wrong ARM platform
+linux-firmware-marvell	drop	omarchy-other	Microsoft Surface wifi firmware
+dell-xps-touchpad-haptics	drop	omarchy-other	Dell XPS hardware
+dell-xps13-sidecar-amps	drop	omarchy-other	Dell XPS hardware
+lsp-plugins-lv2	alarm	omarchy-other	in Arch Linux ARM aarch64 repos
+apple-bcm-firmware	drop	omarchy-other	Apple T2 MacBook firmware
+apple-t2-audio-config	drop	omarchy-other	Apple T2 MacBook audio
+linux-t2	drop	omarchy-other	Apple T2 MacBook kernel; x86-only
+linux-t2-headers	drop	omarchy-other	Apple T2 MacBook kernel; x86-only
+t2fanrd	drop	omarchy-other	Apple T2 MacBook fan control
+qmk-hid	drop	omarchy-other	Framework 16 keyboard firmware tool

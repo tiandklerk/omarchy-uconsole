@@ -1,0 +1,15 @@
+[Unit]
+Description=Grow the root filesystem to fill the card on first boot
+DefaultDependencies=no
+Conflicts=shutdown.target
+After=systemd-remount-fs.service
+Before=systemd-user-sessions.service shutdown.target
+ConditionPathExists=!/var/lib/uconsole/firstboot-resize-done
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/bin/uconsole-firstboot-resize
+RemainAfterExit=yes
+
+[Install]
+WantedBy=sysinit.target

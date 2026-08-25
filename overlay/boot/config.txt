@@ -1,0 +1,40 @@
+# ---------------------------------------------------------------------------
+# omarchy-uconsole - Raspberry Pi firmware configuration
+# Target: ClockworkPi uConsole carrier board + Raspberry Pi Compute Module 5
+# ---------------------------------------------------------------------------
+# The values here are derived from ak-rex's ClockworkPi pi-gen boot files,
+# adapted for Arch Linux ARM (which loads the kernel by name from this file
+# rather than relying on the default kernel8.img).
+# ---------------------------------------------------------------------------
+
+arm_64bit=1
+kernel=kernel8-uconsole.img
+
+# The uConsole has no HDMI-attached display at boot and its DSI panel is not a
+# standard "LCD"; let the overlay describe it instead of the firmware probing.
+ignore_lcd=1
+disable_overscan=1
+max_framebuffers=2
+
+# On-board audio via the AXP PMIC codec, routed to GPIO 12/13.
+dtparam=audio=on
+dtoverlay=audremap,pins_12_13
+
+# uConsole's USB is host-only on the internal hub.
+dtoverlay=dwc2,dr_mode=host
+
+# Use the external antenna connector fitted to the uConsole shell, not the
+# CM5's on-board antenna. Without this, wifi range is very poor.
+dtparam=ant2
+
+[cm5]
+# Brings up: the 480x1280 DSI panel, the OCP8178 backlight, the ClockworkPi
+# matrix keyboard/trackball, the AXP228 PMIC (battery + charging), and the
+# audio codec. Provided by ak-rex's kernel tree - not present in mainline or
+# in the stock Raspberry Pi kernel.
+dtoverlay=clockworkpi-uconsole-cm5
+
+[cm4]
+dtoverlay=clockworkpi-uconsole-cm4
+
+[all]

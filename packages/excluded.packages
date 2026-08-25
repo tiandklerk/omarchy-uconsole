@@ -1,0 +1,73 @@
+# Packages from Omarchy's own lists that omarchy-uconsole deliberately does not
+# carry, with the reason. Format:  <package> | <reason>
+#
+# This file is read by bin/triage-packages.sh and rendered into
+# docs/03-not-included.md. Anything NOT listed here is attempted for aarch64.
+
+# ---------------------------------------------------------------------------
+# Bootloader: the Pi boots from firmware + config.txt on a FAT partition. There
+# is no BIOS/UEFI for limine to install into, so Omarchy's limine-based boot
+# menu and its snapshot-rollback entries have no equivalent here.
+# ---------------------------------------------------------------------------
+limine                          | x86 BIOS/UEFI bootloader; the CM5 boots via Raspberry Pi firmware and config.txt
+limine-mkinitcpio-hook          | depends on limine
+limine-snapper-sync             | depends on limine; boot-menu snapshot rollback is not available
+snapper                         | Omarchy's snapshot story is limine + btrfs rollback entries; we ship ext4 (see docs/03-not-included.md)
+btrfs-progs                     | not used; root filesystem is ext4 so it can be grown in place on first boot
+
+# ---------------------------------------------------------------------------
+# Kernel: replaced by linux-uconsole, built from ak-rex's tree.
+# ---------------------------------------------------------------------------
+linux                           | replaced by our uConsole kernel (stage 10)
+linux-headers                   | replaced by our uConsole kernel headers
+linux-ptl                       | Intel Panther Lake kernel; x86-only
+linux-ptl-headers               | Intel Panther Lake kernel; x86-only
+linux-t2                        | Apple T2 MacBook kernel; x86-only
+linux-t2-headers                | Apple T2 MacBook kernel; x86-only
+
+# ---------------------------------------------------------------------------
+# GPU drivers for hardware the CM5 does not have. The CM5 uses the Broadcom
+# VideoCore VII, driven by the in-kernel v4c/v3d DRM driver plus Mesa; none of
+# these vendor stacks apply.
+# ---------------------------------------------------------------------------
+nvidia-dkms                     | no NVIDIA GPU on a CM5
+nvidia-open-dkms                | no NVIDIA GPU on a CM5
+nvidia-580xx-dkms               | no NVIDIA GPU on a CM5
+nvidia-utils                    | no NVIDIA GPU on a CM5
+nvidia-580xx-utils              | no NVIDIA GPU on a CM5
+lib32-nvidia-utils              | no NVIDIA GPU, and no 32-bit multilib on aarch64
+lib32-nvidia-580xx-utils        | no NVIDIA GPU, and no 32-bit multilib on aarch64
+libva-nvidia-driver             | no NVIDIA GPU on a CM5
+vulkan-intel                    | no Intel GPU on a CM5
+vulkan-radeon                   | no AMD GPU on a CM5
+vulkan-asahi                    | Apple Silicon GPU driver; wrong ARM platform
+intel-media-driver              | Intel GPU video acceleration; x86-only
+libva-intel-driver              | Intel GPU video acceleration; x86-only
+libvpl                          | Intel oneVPL video encode/decode; x86-only
+vpl-gpu-rt                      | Intel oneVPL runtime; x86-only
+
+# ---------------------------------------------------------------------------
+# x86 platform / vendor laptop support.
+# ---------------------------------------------------------------------------
+intel-ipu7-camera               | Intel IPU7 camera stack; x86-only
+intel-lpmd                      | Intel low-power daemon; x86-only
+thermald                        | Intel thermal daemon; x86-only (the CM5 uses the RPi thermal driver)
+asusctl                         | ASUS laptop firmware control
+dell-xps-touchpad-haptics       | Dell XPS hardware
+dell-xps13-sidecar-amps         | Dell XPS hardware
+macbook12-spi-driver-dkms       | Apple MacBook SPI keyboard
+apple-bcm-firmware              | Apple T2 MacBook firmware
+apple-t2-audio-config           | Apple T2 MacBook audio
+t2fanrd                         | Apple T2 MacBook fan control
+tuxedo-drivers-nocompatcheck-dkms | TUXEDO laptop drivers
+yt6801-dkms                     | Motorcomm YT6801 PCIe ethernet; not present on a uConsole
+qmk-hid                         | Framework 16 keyboard firmware tool
+broadcom-wl                     | x86 DKMS Broadcom driver; the CM5 uses the in-kernel brcmfmac driver
+linux-firmware-marvell          | Microsoft Surface wifi firmware
+
+# ---------------------------------------------------------------------------
+# Not applicable to the architecture.
+# ---------------------------------------------------------------------------
+bolt                            | Thunderbolt device manager; the CM5 has no Thunderbolt
+ddcutil                         | DDC/CI control for external monitors over I2C; the internal DSI panel has no DDC
+asdcontrol                      | Apple Studio Display brightness control

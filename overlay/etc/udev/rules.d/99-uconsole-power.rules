@@ -1,0 +1,12 @@
+# uConsole power management.
+#
+# The AXP228 PMIC comes up with a conservative default charge current that
+# barely keeps up with the CM5 under load - the battery drains while plugged
+# in. ClockworkPi's own images raise it; these are the same values used by
+# ak-rex's Debian images.
+KERNEL=="axp20x-battery", ATTR{constant_charge_current_max}="2200000", ATTR{constant_charge_current}="2000000"
+
+# Let members of the video group set panel brightness without root, which is
+# what brightnessctl (and therefore Omarchy's brightness keys) needs.
+ACTION=="add", SUBSYSTEM=="backlight", RUN+="/bin/chgrp video /sys/class/backlight/%k/brightness"
+ACTION=="add", SUBSYSTEM=="backlight", RUN+="/bin/chmod g+w /sys/class/backlight/%k/brightness"

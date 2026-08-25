@@ -1,0 +1,8 @@
+.cache/
+.research/
+out/
+work/
+*.img
+*.img.xz
+*.tar.gz
+*.pkg.tar.zst
