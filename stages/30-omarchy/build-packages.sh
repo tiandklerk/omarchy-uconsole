@@ -4,6 +4,10 @@
 set -uo pipefail          # deliberately NOT -e: one bad PKGBUILD must not end the run
 
 REPORT=/repo/build-report.tsv
+# One package must not be able to consume the whole run. Emulated builds of
+# large C++ trees (obs-studio in particular) can run for many hours; past this
+# they are abandoned and reported, so the rest of the queue still gets built.
+PKG_TIMEOUT="${PKG_TIMEOUT:-5400}"
 PKGS_SRC=/cache/omarchy-pkgs
 # Build under the bind-mounted work directory so makepkg logs survive the
 # container and can be read from the host while a long build is in flight.
@@ -72,6 +76,17 @@ apply_port_patches() {
 
 build_one() {
   local pkg="$1" dir="$WORKDIR/$pkg"
+
+  # Resume: a package already sitting in /repo was built by an earlier run.
+  # Emulated builds are expensive enough that rebuilding them on every restart
+  # would make iterating on this script impractical.
+  if compgen -G "/repo/${pkg}-[0-9]*.pkg.tar."* > /dev/null; then
+    printf '%s\tbuilt\t%s (from a previous run)\n' "$pkg" \
+      "$(cd /repo && ls "${pkg}"-[0-9]*.pkg.tar.* | tr '\n' ' ')" >> "$REPORT"
+    echo "  OK $pkg (cached)"
+    return
+  fi
+
   rm -rf "$dir"; mkdir -p "$dir"
 
   # Prefer Omarchy's own PKGBUILD; fall back to the AUR.
@@ -100,7 +115,18 @@ build_one() {
 
   say "building $pkg"
   local log="$WORKDIR/$pkg.log"
-  if ( cd "$dir" && makepkg -sr --noconfirm --needed --skippgpcheck --nocheck ) > "$log" 2>&1; then
+  local rc=0
+  ( cd "$dir" && timeout --foreground "$PKG_TIMEOUT" \
+      makepkg -sr --noconfirm --needed --skippgpcheck --nocheck ) > "$log" 2>&1 || rc=$?
+
+  if (( rc == 124 )); then
+    printf '%s\ttimeout\tabandoned after %ss under emulation\n' "$pkg" "$PKG_TIMEOUT" >> "$REPORT"
+    echo "  TIMEOUT $pkg after ${PKG_TIMEOUT}s"
+    rm -rf "$dir/src" "$dir/pkg"
+    return
+  fi
+
+  if (( rc == 0 )); then
     # Match any compression: PKGEXT is normalised to .zst in the Dockerfile,
     # but a PKGBUILD is free to override it.
     if compgen -G "$dir/*.pkg.tar."* > /dev/null; then
@@ -138,7 +164,8 @@ fi
 
 say "build report"
 column -t -s $'\t' "$REPORT" 2>/dev/null || cat "$REPORT"
-printf '\nbuilt: %s  failed: %s  unavailable: %s\n' \
+printf '\nbuilt: %s  failed: %s  timeout: %s  unavailable: %s\n' \
   "$(awk -F'\t' '$2=="built"' "$REPORT" | wc -l)" \
   "$(awk -F'\t' '$2=="failed"' "$REPORT" | wc -l)" \
+  "$(awk -F'\t' '$2=="timeout"' "$REPORT" | wc -l)" \
   "$(awk -F'\t' '$2=="unavailable"' "$REPORT" | wc -l)"

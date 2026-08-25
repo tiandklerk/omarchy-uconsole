@@ -38,6 +38,7 @@ run_in_root "$IMG_ALARM_BUILD" \
   -v "$REPO_DIR:/repo" \
   -v "$HERE/../..:/src:ro" \
   -e "JOBS=$JOBS" \
+  -e "PKG_TIMEOUT=$PKG_TIMEOUT" \
   -- bash -euo pipefail /src/stages/30-omarchy/build-packages.sh
 
 # --- install into the rootfs ----------------------------------------------
