@@ -11,7 +11,33 @@ WORKDIR=/work/pkgbuild
 say() { printf '\n\033[1;35m==> %s\033[0m\n' "$*"; }
 
 mkdir -p "$WORKDIR"
-sudo pacman -Sy --noconfirm >/dev/null
+
+# Packages we build here must be installable as dependencies of packages we
+# build later - omarchy depends on omarchy-settings=<exact version>, and
+# makepkg resolves that through pacman, not through the filesystem. So /repo is
+# registered as a real pacman repository and refreshed after every success.
+if ! grep -q '^\[uconsole-local\]' /etc/pacman.conf; then
+  sudo tee -a /etc/pacman.conf >/dev/null <<'PACMAN'
+
+[uconsole-local]
+SigLevel = Optional TrustAll
+Server = file:///repo
+PACMAN
+fi
+
+refresh_local_repo() {
+  ( cd /repo
+    rm -f uconsole-local.db* uconsole-local.files*
+    if compgen -G "*.pkg.tar."* > /dev/null; then
+      repo-add --quiet uconsole-local.db.tar.gz *.pkg.tar.* >/dev/null 2>&1
+    fi
+  )
+  sudo pacman -Sy --noconfirm >/dev/null 2>&1 || true
+}
+
+# An empty repo makes pacman -Sy fail on the missing db, so seed it first.
+refresh_local_repo
+sudo pacman -Sy --noconfirm >/dev/null 2>&1 || true
 
 printf 'package\tstatus\tdetail\n' > "$REPORT"
 
@@ -70,9 +96,13 @@ build_one() {
   say "building $pkg"
   local log="$WORKDIR/$pkg.log"
   if ( cd "$dir" && makepkg -sr --noconfirm --needed --skippgpcheck --nocheck ) > "$log" 2>&1; then
-    if compgen -G "$dir/*.pkg.tar.zst" > /dev/null; then
-      cp "$dir"/*.pkg.tar.zst /repo/
-      printf '%s\tbuilt\t%s\n' "$pkg" "$(cd "$dir" && ls *.pkg.tar.zst | tr '\n' ' ')" >> "$REPORT"
+    # Match any compression: PKGEXT is normalised to .zst in the Dockerfile,
+    # but a PKGBUILD is free to override it.
+    if compgen -G "$dir/*.pkg.tar."* > /dev/null; then
+      cp "$dir"/*.pkg.tar.* /repo/
+      printf '%s\tbuilt\t%s\n' "$pkg" "$(cd "$dir" && ls *.pkg.tar.* | tr '\n' ' ')" >> "$REPORT"
+      # Make it available to later packages that depend on it.
+      refresh_local_repo
       echo "  OK $pkg"
     else
       printf '%s\tfailed\tmakepkg succeeded but produced no package\n' "$pkg" >> "$REPORT"
@@ -97,8 +127,8 @@ done < /work/build-list.txt
 say "creating local pacman repository"
 cd /repo
 rm -f uconsole.db* uconsole.files*
-if compgen -G "*.pkg.tar.zst" > /dev/null; then
-  repo-add --quiet uconsole.db.tar.gz *.pkg.tar.zst
+if compgen -G "*.pkg.tar."* > /dev/null; then
+  repo-add --quiet uconsole.db.tar.gz *.pkg.tar.*
 fi
 
 say "build report"

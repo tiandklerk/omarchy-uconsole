@@ -21,8 +21,13 @@ RUN pacman -Sy --noconfirm --needed \
 RUN useradd -m -s /bin/bash builder \
     && echo 'builder ALL=(ALL) NOPASSWD: ALL' > /etc/sudoers.d/builder
 
-# Keep build parallelism and stripping sane under emulation.
-RUN sed -i 's/^#MAKEFLAGS=.*/MAKEFLAGS="-j$(nproc)"/' /etc/makepkg.conf
+# Keep build parallelism sane under emulation, and normalise PKGEXT: Arch
+# Linux ARM still defaults to .pkg.tar.xz while everything downstream (and
+# mainline Arch) expects .pkg.tar.zst. Also cache downloaded sources outside
+# the build tree so a re-run does not refetch them.
+RUN sed -i -e 's/^#\?MAKEFLAGS=.*/MAKEFLAGS="-j$(nproc)"/' \
+           -e "s/^PKGEXT=.*/PKGEXT='.pkg.tar.zst'/" \
+           -e 's|^#\?SRCDEST=.*|SRCDEST=/cache/makepkg-src|' /etc/makepkg.conf
 
 USER builder
 WORKDIR /build
