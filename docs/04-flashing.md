@@ -51,21 +51,26 @@ enable_uart=1
 
 and add `console=serial0,115200` to `cmdline.txt`.
 
-## First login
+## First boot
 
-The image ships a maintenance account only — Omarchy provisions the real user
-itself on first boot.
+The image uses Omarchy's **deferred provisioning**: it ships without your
+account, and on first boot `omarchy-provision-owner` runs on tty1 — before the
+display manager — and asks you to create the owner account. Answer it and the
+desktop starts.
+
+Behind that there is a maintenance account for recovery:
 
 ```
 user: alarm
 pass: alarm
 ```
 
-**Change it.** These are the Arch Linux ARM defaults and are public. `root` has
-the same password.
+**Change or remove it.** These are the Arch Linux ARM defaults and are public;
+`root` has the same password. Set your own before building by editing
+`DEFAULT_USER` / `DEFAULT_PASS` in `config/build.env`.
 
-Set your own before building instead by editing `DEFAULT_USER` / `DEFAULT_PASS`
-in `config/build.env`.
+If provisioning does not appear, the image fell back to plain login — use the
+maintenance account and check `journalctl -u omarchy-provision-owner`.
 
 ## If it does not boot
 

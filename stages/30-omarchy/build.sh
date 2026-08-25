@@ -22,10 +22,15 @@ mkdir -p "$REPO_DIR"
 # The two packages that *are* Omarchy, plus everything triaged as needing a
 # build. omarchy/omarchy-settings are arch=('any') so they need no porting.
 BUILD_LIST="$WORK_DIR/build-list.txt"
+# Order matters. omarchy depends on omarchy-settings=<exact version> and on
+# ttf-jetbrains-mono-nerd-basic, both of which we build ourselves, and makepkg
+# resolves dependencies through pacman against the local repo. So everything
+# else is built first, then omarchy-settings, then omarchy last.
 {
+  awk -F'\t' '$2=="omarchy" || $2=="aur" {print $1}' "$HERE/../../packages/triage.tsv" \
+    | grep -vxE 'omarchy|omarchy-settings'
   echo "omarchy-settings"
   echo "omarchy"
-  awk -F'\t' '$2=="omarchy" || $2=="aur" {print $1}' "$HERE/../../packages/triage.tsv"
 } > "$BUILD_LIST"
 info "$(wc -l < "$BUILD_LIST") packages queued"
 
@@ -39,6 +44,7 @@ run_in_root "$IMG_ALARM_BUILD" \
   -v "$HERE/../..:/src:ro" \
   -e "JOBS=$JOBS" \
   -e "PKG_TIMEOUT=$PKG_TIMEOUT" \
+  -e "OMARCHY_AARCH64_REPO_URL=$OMARCHY_AARCH64_REPO_URL" \
   -- bash -euo pipefail /src/stages/30-omarchy/build-packages.sh
 
 # --- install into the rootfs ----------------------------------------------
@@ -49,6 +55,7 @@ run_in_root "$IMG_ALARM" \
   -v "$OUT_DIR:/out" \
   -v "$HERE/../..:/src:ro" \
   -e "OMARCHY_AARCH64_REPO_URL=$OMARCHY_AARCH64_REPO_URL" \
+  -e "DEFAULT_USER=$DEFAULT_USER" \
   -- bash -euo pipefail /src/stages/30-omarchy/install-omarchy.sh
 
 ok "Omarchy installed"

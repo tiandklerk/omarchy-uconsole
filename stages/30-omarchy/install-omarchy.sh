@@ -72,6 +72,43 @@ for pkg in "${BUILT[@]}"; do
   fi
 done
 
+# --- apply Omarchy to the system ------------------------------------------
+# Installing the packages is not the same as applying Omarchy. The ISO calls
+# omarchy-apply-system in the target chroot to run install/config, the hardware
+# setup, the login (sddm) setup and the post-install steps.
+#
+# --defer-provisioning is the mode built for prebuilt images: it applies system
+# setup without an install user, and leaves the account creation to first boot.
+# That is exactly our situation - we cannot know the owner's username at build
+# time.
+say "applying Omarchy system setup (deferred provisioning)"
+if chroot "$ROOTFS" /bin/bash -c \
+     'omarchy-apply-system --defer-provisioning --first-install' 2>&1 | tail -30; then
+  ok_apply=1
+else
+  ok_apply=0
+  echo "  WARNING: omarchy-apply-system did not complete cleanly."
+  echo "  The packages are installed and /etc/skel is seeded, so the desktop"
+  echo "  should still come up; some system tuning may be missing."
+fi
+# Keep the log where it can be read after flashing, and copy it out for review.
+cp "$ROOTFS/var/log/omarchy-install.log" /repo/omarchy-install.log 2>/dev/null || true
+
+# --- arm first-boot user creation -----------------------------------------
+# The provisioning unit ships in the omarchy package but is deliberately not
+# enabled; whatever stages a deferred install is responsible for arming it.
+say "arming first-boot user provisioning"
+PROV_UNIT="$ROOTFS/usr/share/omarchy/install/provisioning/omarchy-provision-owner.service"
+if [[ -f "$PROV_UNIT" ]]; then
+  install -Dm644 "$PROV_UNIT" "$ROOTFS/etc/systemd/system/omarchy-provision-owner.service"
+  mkdir -p "$ROOTFS/var/lib/omarchy/provisioning"
+  touch "$ROOTFS/var/lib/omarchy/provisioning/pending"
+  inchroot 'systemctl enable omarchy-provision-owner.service' \
+    && echo "  first boot will ask for the owner account on tty1"
+else
+  echo "  provisioning unit not found; first boot will land on the '$DEFAULT_USER' account instead"
+fi
+
 # --- uConsole user defaults, applied last ---------------------------------
 # omarchy-settings ships its own /etc/skel/.config; our panel geometry and
 # input tuning must land on top of it, not under it.

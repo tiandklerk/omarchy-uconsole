@@ -20,6 +20,18 @@ mkdir -p "$WORKDIR"
 # build later - omarchy depends on omarchy-settings=<exact version>, and
 # makepkg resolves that through pacman, not through the filesystem. So /repo is
 # registered as a real pacman repository and refreshed after every success.
+# Upstream's aarch64 repo. It currently holds exactly one package,
+# omarchy-keyring, but that one is a hard dependency of omarchy and is not in
+# the Arch Linux ARM repos, so the builder needs to see it.
+if ! grep -q '^\[omarchy\]' /etc/pacman.conf; then
+  sudo tee -a /etc/pacman.conf >/dev/null <<PACMAN
+
+[omarchy]
+SigLevel = Optional TrustAll
+Server = ${OMARCHY_AARCH64_REPO_URL:-https://pkgs.omarchy.org/aarch64}
+PACMAN
+fi
+
 if ! grep -q '^\[uconsole-local\]' /etc/pacman.conf; then
   sudo tee -a /etc/pacman.conf >/dev/null <<'PACMAN'
 
