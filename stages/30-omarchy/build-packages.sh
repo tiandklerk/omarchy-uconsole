@@ -35,7 +35,7 @@ fi
 if ! grep -q '^\[uconsole-local\]' /etc/pacman.conf; then
   sudo tee -a /etc/pacman.conf >/dev/null <<'PACMAN'
 
-[uconsole-local]
+[uconsole]
 SigLevel = Optional TrustAll
 Server = file:///repo
 PACMAN
@@ -43,16 +43,16 @@ fi
 
 refresh_local_repo() {
   ( cd /repo
-    rm -f uconsole-local.db* uconsole-local.files*
+    rm -f uconsole.db* uconsole.files*
     if compgen -G "*.pkg.tar."* > /dev/null; then
-      repo-add --quiet uconsole-local.db.tar.gz *.pkg.tar.* >/dev/null 2>&1
+      repo-add --quiet uconsole.db.tar.gz *.pkg.tar.* >/dev/null 2>&1
     else
       # repo-add refuses to create an empty database, but pacman treats a
       # missing db as a hard sync failure and then resolves NO dependencies at
       # all - which looks exactly like a broken PKGBUILD. Hand-roll an empty
       # one so the repo is always valid, including before the first build.
-      tar czf uconsole-local.db.tar.gz -T /dev/null
-      ln -sf uconsole-local.db.tar.gz uconsole-local.db
+      tar czf uconsole.db.tar.gz -T /dev/null
+      ln -sf uconsole.db.tar.gz uconsole.db
     fi
   )
   sudo pacman -Sy --noconfirm >/dev/null 2>&1 || true
@@ -167,12 +167,11 @@ while read -r pkg; do
   build_one "$pkg"
 done < /work/build-list.txt
 
-say "creating local pacman repository"
-cd /repo
-rm -f uconsole.db* uconsole.files*
-if compgen -G "*.pkg.tar."* > /dev/null; then
-  repo-add --quiet uconsole.db.tar.gz *.pkg.tar.*
-fi
+say "finalising the local pacman repository"
+# The repo is maintained after every successful build (refresh_local_repo), so
+# by here it is already current. Refreshing once more keeps the final state
+# correct even if the last build failed.
+refresh_local_repo
 
 say "build report"
 column -t -s $'\t' "$REPORT" 2>/dev/null || cat "$REPORT"
