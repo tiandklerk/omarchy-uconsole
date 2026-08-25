@@ -1,5 +1,5 @@
 # Convenience wrapper around build.sh. See README.md.
-.PHONY: all kernel rootfs omarchy image verify triage docs clean distclean binfmt
+.PHONY: all kernel rootfs omarchy image verify triage docs prune clean distclean binfmt
 
 all:        ; ./build.sh
 kernel:     ; ./build.sh kernel
@@ -9,6 +9,16 @@ image:      ; ./build.sh image
 
 ## Assert the built image is structurally bootable (no hardware needed).
 verify:     ; ./bin/verify-image.sh
+
+## Reclaim disk mid-build without losing anything you cannot rebuild cheaply.
+## Drops the kernel build tree (out/kernel already holds every artifact) and
+## the per-package makepkg working directories. Keeps out/, .cache/rpi-linux
+## and the package cache. ~1-2 GB.
+prune:
+	@test -f out/kernel/kernel.release || { echo "kernel artifacts missing; refusing to prune"; exit 1; }
+	rm -rf work/kbuild
+	docker run --rm -v "$(CURDIR)/work:/work" alpine sh -c 'rm -rf /work/pkgbuild/*/src /work/pkgbuild/*/pkg' || true
+	@df -h . | tail -1
 
 ## Re-run the aarch64 package triage and regenerate the docs it feeds.
 triage:

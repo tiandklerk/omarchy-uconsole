@@ -30,7 +30,10 @@ Four stages, each resumable:
 
 ## Requirements
 
-- An x86_64 Linux host with Docker, ~30 GB free disk, and patience
+- An x86_64 Linux host with Docker and patience
+- **~30 GB free disk.** The rootfs and the image are each roughly the size of
+  the installed system, and they exist at the same time. `make prune` reclaims
+  the kernel build tree mid-run if you are tight.
 - aarch64 emulation registered on the host:
 
   ```bash
