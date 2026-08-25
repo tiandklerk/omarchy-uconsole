@@ -22,15 +22,22 @@ mkdir -p "$REPO_DIR"
 # The two packages that *are* Omarchy, plus everything triaged as needing a
 # build. omarchy/omarchy-settings are arch=('any') so they need no porting.
 BUILD_LIST="$WORK_DIR/build-list.txt"
-# Order matters. omarchy depends on omarchy-settings=<exact version> and on
+# Order matters, twice over.
+#
+# Correctness: omarchy depends on omarchy-settings=<exact version> and on
 # ttf-jetbrains-mono-nerd-basic, both of which we build ourselves, and makepkg
-# resolves dependencies through pacman against the local repo. So everything
-# else is built first, then omarchy-settings, then omarchy last.
+# resolves dependencies through pacman against the local repo - so those must
+# exist before omarchy is attempted.
+#
+# Resilience: the desktop itself is built FIRST, ahead of the optional apps.
+# These are emulated builds running for hours; if the run is interrupted or a
+# later package hangs, what survives should be a working Omarchy rather than a
+# pile of accessories and no desktop.
+OMARCHY_CORE=(ttf-jetbrains-mono-nerd-basic omarchy-settings omarchy)
 {
+  printf '%s\n' "${OMARCHY_CORE[@]}"
   awk -F'\t' '$2=="omarchy" || $2=="aur" {print $1}' "$HERE/../../packages/triage.tsv" \
-    | grep -vxE 'omarchy|omarchy-settings'
-  echo "omarchy-settings"
-  echo "omarchy"
+    | grep -vxF -f <(printf '%s\n' "${OMARCHY_CORE[@]}")
 } > "$BUILD_LIST"
 info "$(wc -l < "$BUILD_LIST") packages queued"
 
