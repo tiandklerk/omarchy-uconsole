@@ -39,9 +39,12 @@ for d in /sys/class/block/${n}p*; do
 done
 trap "umount -l /m/boot /m 2>/dev/null; losetup -d $LOOP" EXIT
 
+# Mount READ-ONLY. A read-write mount updates the ext4 superblock (mount count,
+# last-mount time), which changes the image bytes and invalidates the published
+# sha256 - verifying an image must not modify it.
 mkdir -p /m
-mount "${LOOP}p2" /m    || { echo "cannot mount root partition"; exit 1; }
-mount "${LOOP}p1" /m/boot || { echo "cannot mount boot partition"; exit 1; }
+mount -o ro "${LOOP}p2" /m    || { echo "cannot mount root partition"; exit 1; }
+mount -o ro "${LOOP}p1" /m/boot || { echo "cannot mount boot partition"; exit 1; }
 
 echo
 echo "Boot partition"

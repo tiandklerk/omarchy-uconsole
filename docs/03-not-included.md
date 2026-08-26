@@ -125,8 +125,13 @@ What actually happened the last time stage 30 ran on this machine.
 
 | Package | Status | Detail |
 |---|---|---|
-| `yay` | built | yay-13.0.1-1-aarch64.pkg.tar.zst  |
-| `xdg-terminal-exec` | built | xdg-terminal-exec-0.14.3-1-any.pkg.tar.zst  |
+| `tzupdate` | built | tzupdate-3.1.0-1-aarch64.pkg.tar.zst  |
+| `ufw-docker` | built | ufw-docker-251123-1-any.pkg.tar.zst  |
+| `omacalc` | built | omacalc-0.2.2-1-aarch64.pkg.tar.zst  |
+| `omacut` | built | omacut-0.4.0-1-aarch64.pkg.tar.zst  |
+| `omawrite` | built | omawrite-0.5.0-1-aarch64.pkg.tar.zst  |
+| `ttfx` | built | ttfx-0.3.2-1-aarch64.pkg.tar.zst  |
+| `omarchy-nvim` | built | omarchy-nvim-2026.8.13-1-any.pkg.tar.zst  |
 
 A package that failed here is simply absent from the image; the rest
 of Omarchy is unaffected.
