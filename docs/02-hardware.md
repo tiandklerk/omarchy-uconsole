@@ -24,14 +24,19 @@ Configured in: `overlay/boot/config.txt`, `overlay/boot/cmdline.txt`.
 
 ## Display
 
-A **480×1280 60 Hz MIPI DSI panel**, physically mounted rotated 90° in the
-shell, so it reads as 1280×480 landscape.
+A **720×1280 60 Hz MIPI DSI panel** on a 5" diagonal, physically mounted
+rotated 90° in the shell, so it reads as **1280×720** landscape.
+
+It advertises exactly **one** mode, `720x1280@59.901`. Naming any other mode
+leaves the CRTC disabled — backlight lit, nothing displayed — so the Hyprland
+config uses `mode = "preferred"` rather than pinning a resolution.
 
 - Panel driver: `panel-cwu50` (`CONFIG_DRM_PANEL_CWU50`)
 - Enabled by: `dtoverlay=clockworkpi-uconsole-cm5`
 - Rotation, console: `fbcon=rotate:1` on the kernel command line
 - Rotation, Wayland: `transform = 3` (270°) in
-  `overlay/skel/.config/hypr/monitors.lua`
+  `overlay/skel/.config/hypr/monitors.lua` **and** in the sddm greeter's own
+  Hyprland config, which does not read the user's
 
 The output enumerates as `DSI-1` or `DSI-2` depending on kernel version and
 which lane comes up; both are configured.
@@ -39,13 +44,13 @@ which lane comes up; both are configured.
 `ignore_lcd=1` in `config.txt` stops the firmware trying to probe this as a
 standard Raspberry Pi touch display.
 
-### Consequences of a 1280×480 screen
+### Consequences of a 5" 1280×720 screen
 
-This is the single most invasive fact about the device. 480 vertical pixels is
-about a third of a laptop's, and Omarchy's defaults assume a laptop:
+The pixel count is ordinary; the physical size is not. Everything is simply
+small, and Omarchy's defaults assume a laptop:
 
 - `GDK_SCALE` is dropped from Omarchy's default of `2` to `1`
-- Gaps, borders and rounding are tightened in
+- Gaps, borders and rounding are tightened modestly in
   `overlay/skel/.config/hypr/looknfeel.lua`
 - Blur and shadows are disabled — they cost VideoCore VII time and buy nothing
   at this size

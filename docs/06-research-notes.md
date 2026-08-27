@@ -25,7 +25,7 @@ The Debian-only pieces we must replace with Arch equivalents are his
 
 ```
 arch/arm/boot/dts/overlays/clockworkpi-uconsole-cm5-overlay.dts
-drivers/gpu/drm/panel/panel-cwu50.c          # the 480x1280 DSI panel
+drivers/gpu/drm/panel/panel-cwu50.c          # the 720x1280 DSI panel
 drivers/video/backlight/ocp8178_bl.c         # backlight
 ```
 
@@ -92,10 +92,16 @@ actually fails.
 
 ## 6. Panel geometry
 
-From Rex's kanshi profile and X11/labwc rotation snippets, the panel is
-**480x1280@60 mounted rotated**, presented as 1280x480 landscape via a **270°**
-transform, on output `DSI-1` *or* `DSI-2` depending on which lane the CM5 brings
-up. Both are configured; Hyprland ignores rules for absent outputs.
+Rex's kanshi config contains profiles for **both** 480x1280 and 720x1280,
+because it covers the DevTerm and the uConsole. Reading it without that context
+is how this project initially shipped the wrong geometry.
+
+Measured on the device: the uConsole CM5 panel is **720x1280@59.901**, output
+`DSI-2`, and that is its *only* advertised mode. Rotated 270° it presents as
+**1280x720**. The 1280x480 ultrawide is the **DevTerm's** panel, not this one.
+
+Pinning a mode the panel does not advertise leaves the CRTC `disabled` with the
+backlight lit — indistinguishable from a broken compositor. Use `preferred`.
 
 Console rotation is separate and comes from `fbcon=rotate:1` on the kernel
 command line.

@@ -1,25 +1,19 @@
 -- uConsole look & feel overrides.
 --
--- 480 vertical pixels is the constraint that shapes everything here: Omarchy's
--- desktop-sized gaps and borders cost a visible fraction of the screen, so they
--- are tightened rather than removed (removing them entirely makes tiled windows
--- indistinguishable at this size).
+-- The panel is 1280x720 on a 5" diagonal: the pixel count is ordinary, the
+-- physical size is not. Everything is simply small, so gaps and borders are
+-- tightened modestly and the expensive effects are dropped - blur and shadows
+-- cost real time on the CM5's VideoCore VII and buy little at this size.
 
 hl.config({
   general = {
-    gaps_in = 2,
-    gaps_out = 4,
+    gaps_in = 3,
+    gaps_out = 6,
     border_size = 1,
   },
   decoration = {
-    rounding = 4,
-    -- Blur is a real cost on the CM5's VideoCore VII and buys little on a
-    -- panel this small.
+    rounding = 6,
     blur = { enabled = false },
     shadow = { enabled = false },
-  },
-  animations = {
-    -- Kept on, but short: long animations feel sluggish on this GPU.
-    enabled = true,
   },
 })

@@ -177,6 +177,28 @@ for home in "$ROOTFS"/home/*; do
   chroot "$ROOTFS" chown -R "$user:$user" "/home/$user"
 done
 
+# --- greeter rotation ------------------------------------------------------
+# sddm runs its OWN Hyprland instance for the greeter, from
+# /usr/share/sddm/hyprland.lua. It never reads the user's
+# ~/.config/hypr/monitors.lua, so without this the login screen renders sideways
+# on a panel that is mounted rotated - even though the desktop behind it is
+# correct.
+say "rotating the sddm greeter for the uConsole panel"
+GREETER="$ROOTFS/usr/share/sddm/hyprland.lua"
+if [[ -f "$GREETER" ]] && ! grep -q "uConsole" "$GREETER"; then
+  cat >> "$GREETER" <<'LUA'
+
+-- uConsole: the panel is mounted rotated 90 degrees in the shell. The greeter
+-- runs its own Hyprland and does not read the user's monitors.lua, so the
+-- transform has to be repeated here.
+hl.monitor({ output = "DSI-1", mode = "preferred", position = "0x0", scale = 1, transform = 3 })
+hl.monitor({ output = "DSI-2", mode = "preferred", position = "0x0", scale = 1, transform = 3 })
+LUA
+  echo "  greeter rotated"
+else
+  echo "  greeter config not found or already patched"
+fi
+
 say "enabling deferred first-boot setup"
 inchroot 'systemctl enable uconsole-firstboot-omarchy.service' || \
   echo "  could not enable the deferred-setup unit"

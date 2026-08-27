@@ -82,10 +82,28 @@ Inside Hyprland:
 hyprctl monitors all
 ```
 
-Expect a `DSI-1` or `DSI-2` output, mode `480x1280@60`, `transform: 3`, giving a
-**1280×480** logical size. If the output is named something else, or the mode is
+Expect a `DSI-2` output, mode `720x1280@59.901`, `transform: 3`, giving a
+**1280×720** logical size.
+
+If `hyprctl monitors` shows a mode that is not in `availableModes`, that is the
+failure: the CRTC will read `enabled=disabled` in
+`/sys/class/drm/card*-DSI-*/enabled` and nothing will be drawn. If the output is named something else, or the mode is
 not offered, edit `~/.config/hypr/monitors.lua` to match what `hyprctl monitors
 all` actually reports — that file is the single place this is configured.
+
+### Lit panel, nothing drawn
+
+Two distinct causes, both seen on the first real boot:
+
+**No GPU.** Check `ls /dev/dri/` — if there is no `renderD128`, the v3d overlay
+is missing and Mesa is on llvmpipe. The journal shows `EGL setup failed` and
+`egl: failed to create dri2 screen`. Fix: `dtoverlay=vc4-kms-v3d-pi5` in
+`config.txt`. The display works without it; the compositor does not.
+
+**Wrong mode.** Check `cat /sys/class/drm/card*-DSI-*/enabled`. If it says
+`disabled` while `status` says `connected`, a mode was requested that the panel
+does not advertise. Compare `hyprctl monitors` against
+`cat /sys/class/drm/card*-DSI-*/modes`. Fix: `mode = "preferred"`.
 
 ## 6. Hardware checks
 
