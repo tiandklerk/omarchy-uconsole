@@ -74,6 +74,13 @@ grep -q "^dtparam=ant2" /m/boot/config.txt; chk "external wifi antenna enabled" 
 grep -qE "^dtoverlay=vc4-kms-v3d(-pi5)?$" /m/boot/config.txt
 chk "GPU overlay enabled (vc4-kms-v3d) - without it EGL fails and nothing draws" $?
 [[ -f /m/boot/overlays/vc4-kms-v3d-pi5.dtbo ]]; chk "vc4-kms-v3d-pi5.dtbo present" $?
+# Audio needs BOTH of these on a CM5 and each fails silently alone: the wrong
+# audremap plays into a dummy codec, and without the GPIO the amp is unpowered.
+grep -q "^dtoverlay=audremap-pi5,pins_12_13$" /m/boot/config.txt
+chk "CM5 audio overlay (audremap-pi5) - plain audremap is inert on a CM5" $?
+grep -q "^gpio=11=op,dh$" /m/boot/config.txt
+chk "speaker amplifier enable (gpio=11=op,dh)" $?
+[[ -f /m/boot/overlays/audremap-pi5.dtbo ]]; chk "audremap-pi5.dtbo present" $?
 
 echo
 echo "Boot arguments"
