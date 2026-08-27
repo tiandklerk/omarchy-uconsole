@@ -248,13 +248,16 @@ SigLevel = Optional TrustAll
 Server = https://pkgs.omarchy.org/$arch
 PACMAN
 mv "$ROOTFS/etc/pacman.conf.new" "$ROOTFS/etc/pacman.conf"
-# pacman 7 sandboxes downloads with Landlock, which bcm2712_defconfig does not
-# build (the running system reports "LSMs: capability" only). Without this,
-# every pacman operation fails with "Landlock is not supported by the kernel".
-# Remove once the kernel ships CONFIG_SECURITY_LANDLOCK.
-grep -q '^DisableSandbox' "$ROOTFS/etc/pacman.conf" || \
-  sed -i '/^\[options\]/a DisableSandbox' "$ROOTFS/etc/pacman.conf"
-echo "  repositories: $(grep -cE '^\[' "$ROOTFS/etc/pacman.conf") sections, sandbox disabled"
+# pacman 7 sandboxes downloads with Landlock. Our kernel now builds
+# CONFIG_SECURITY_LANDLOCK=y with landlock in CONFIG_LSM, so the sandbox works
+# and DisableSandbox is NOT needed - leaving it would ship a distro with a
+# security feature switched off for no reason.
+#
+# If a kernel without Landlock is ever used here, pacman fails with
+# "restricting filesystem access failed because Landlock is not supported by
+# the kernel"; the fix is to add DisableSandbox under [options].
+sed -i '/^DisableSandbox$/d' "$ROOTFS/etc/pacman.conf"
+echo "  repositories: $(grep -cE '^\[' "$ROOTFS/etc/pacman.conf") sections"
 
 say "restoring pacman's space check for the shipped system"
 sed -i 's/^#CheckSpace/CheckSpace/' "$ROOTFS/etc/pacman.conf"

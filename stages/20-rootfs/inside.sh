@@ -141,6 +141,12 @@ FSTAB
 inchroot "id -u $DEFAULT_USER >/dev/null 2>&1 || useradd -m -G wheel,video,audio,input,storage -s /bin/bash $DEFAULT_USER"
 inchroot "echo '$DEFAULT_USER:$DEFAULT_PASS' | chpasswd"
 inchroot "echo 'root:$DEFAULT_PASS' | chpasswd"
+# useradd leaves homes group-writable under the default umask, which sshd's
+# StrictModes rejects outright - public-key auth silently fails with no useful
+# error - and which is poor hygiene regardless.
+chmod 750 "$ROOTFS/home/$DEFAULT_USER" 2>/dev/null || true
+chmod 750 "$ROOTFS/etc/skel" 2>/dev/null || true
+
 echo '%wheel ALL=(ALL:ALL) ALL' > "$ROOTFS/etc/sudoers.d/10-wheel"
 chmod 0440 "$ROOTFS/etc/sudoers.d/10-wheel"
 

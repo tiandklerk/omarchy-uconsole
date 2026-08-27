@@ -105,6 +105,38 @@ is missing and Mesa is on llvmpipe. The journal shows `EGL setup failed` and
 does not advertise. Compare `hyprctl monitors` against
 `cat /sys/class/drm/card*-DSI-*/modes`. Fix: `mode = "preferred"`.
 
+### Suspend
+
+`systemctl suspend` (and the Suspend entry in Omarchy's power menu) silently did
+nothing on earlier builds, because `bcm2712_defconfig` ships no sleep support at
+all — `/sys/power/state` was empty, so systemd had no state to write.
+
+The kernel here builds `CONFIG_SUSPEND=y`, which provides **s2idle** only:
+
+```bash
+cat /sys/power/state     # expect: freeze
+```
+
+s2idle idles the CPUs but leaves devices powered — it is not a laptop's
+suspend-to-RAM, and power draw stays well above off. Raspberry Pi disables this
+deliberately, so **resume is unproven on this hardware**. Test it when you can
+afford to hold the power button; the most likely failure is suspending and
+returning to a dead panel.
+
+Hibernation is not available: it needs a real swap device, and the only swap
+here is zram, which lives in RAM.
+
+### pacman fails with a Landlock error
+
+If `pacman` reports `restricting filesystem access failed because Landlock is
+not supported by the kernel`, the running kernel lacks
+`CONFIG_SECURITY_LANDLOCK`. This image's kernel has it; a stock Raspberry Pi
+kernel does not. Workaround:
+
+```bash
+sudo sed -i '/^\[options\]/a DisableSandbox' /etc/pacman.conf
+```
+
 ## 6. Hardware checks
 
 | Thing | Check | Expect |
