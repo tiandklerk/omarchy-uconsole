@@ -1,0 +1,13 @@
+[Unit]
+Description=Configure wifi and SSH from /boot/uconsole-wifi.txt
+After=NetworkManager.service local-fs.target
+Wants=NetworkManager.service
+ConditionPathExists=/boot/uconsole-wifi.txt
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/bin/uconsole-wifi-from-boot
+RemainAfterExit=no
+
+[Install]
+WantedBy=multi-user.target

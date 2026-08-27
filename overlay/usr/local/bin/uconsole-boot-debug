@@ -1,0 +1,72 @@
+#!/bin/bash
+# Write boot diagnostics to the FAT boot partition.
+#
+# A uConsole with a dark panel, no network and no serial adapter has no channel
+# to tell you what went wrong. The FAT partition is one: it is written here and
+# read from any machine that can read an SD card, Windows included.
+#
+# The ABSENCE of this output is itself diagnostic - it means systemd never got
+# far enough to run this unit, which points at firmware/kernel rather than
+# userspace.
+set -uo pipefail
+
+OUT=/boot/uconsole-debug
+mkdir -p "$OUT" 2>/dev/null || exit 0
+
+stamp=$(date -u '+%Y-%m-%d %H:%M:%S UTC' 2>/dev/null || echo unknown)
+{
+  echo "=== uConsole boot debug — $stamp ==="
+  echo "kernel:   $(uname -a)"
+  echo "uptime:   $(uptime -p 2>/dev/null)"
+  echo "cmdline:  $(cat /proc/cmdline)"
+} > "$OUT/summary.txt" 2>&1
+
+# The whole kernel ring buffer: panel, backlight, PMIC and DRM all report here.
+dmesg > "$OUT/dmesg.txt" 2>&1
+
+# Did the device tree overlay actually apply? This is the single most useful
+# check for a dark panel.
+{
+  echo "=== device-tree model / compatible ==="
+  cat /proc/device-tree/model 2>/dev/null; echo
+  tr '\0' '\n' < /proc/device-tree/compatible 2>/dev/null
+  echo
+  echo "=== DRM cards and connectors ==="
+  ls -l /sys/class/drm/ 2>&1
+  for c in /sys/class/drm/*/status; do echo "$c: $(cat "$c" 2>/dev/null)"; done
+  echo
+  echo "=== backlight ==="
+  ls -l /sys/class/backlight/ 2>&1
+  for b in /sys/class/backlight/*/; do
+    echo "$b brightness=$(cat "$b/brightness" 2>/dev/null) max=$(cat "$b/max_brightness" 2>/dev/null)"
+  done
+  echo
+  echo "=== power supply (battery / AXP) ==="
+  ls -l /sys/class/power_supply/ 2>&1
+  echo
+  echo "=== loaded modules of interest ==="
+  lsmod | grep -iE "cwu50|ocp8178|axp20x|vc4|v3d|drm|brcmfmac" 2>&1
+  echo
+  echo "=== input devices (keyboard / trackball) ==="
+  cat /proc/bus/input/devices 2>/dev/null | grep -E "^N:|^H:" 
+  echo
+  echo "=== network ==="
+  ip -br addr 2>&1
+  nmcli -t -f DEVICE,TYPE,STATE device 2>/dev/null
+} > "$OUT/hardware.txt" 2>&1
+
+# Failed units explain a desktop that does not start even when the panel works.
+{
+  echo "=== failed units ==="
+  systemctl --failed --no-pager 2>&1
+  echo
+  echo "=== display-manager / provisioning ==="
+  systemctl status sddm --no-pager 2>&1 | head -30
+  echo
+  systemctl status omarchy-provision-owner --no-pager 2>&1 | head -30
+} > "$OUT/services.txt" 2>&1
+
+journalctl -b --no-pager > "$OUT/journal.txt" 2>&1
+
+sync
+exit 0

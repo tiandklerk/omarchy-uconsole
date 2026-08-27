@@ -1,0 +1,14 @@
+[Unit]
+Description=Write boot diagnostics to the FAT boot partition
+After=multi-user.target systemd-user-sessions.service
+Wants=multi-user.target
+
+[Service]
+Type=oneshot
+# Late enough that the panel, network and display manager have had their say.
+ExecStartPre=/bin/sleep 25
+ExecStart=/usr/local/bin/uconsole-boot-debug
+RemainAfterExit=no
+
+[Install]
+WantedBy=multi-user.target

@@ -8,7 +8,15 @@
 # ---------------------------------------------------------------------------
 
 arm_64bit=1
-kernel=kernel8-uconsole.img
+
+# Deliberately the stock name. ak-rex's working CM5 images ship kernel8.img and
+# let the firmware find it; a custom kernel= filename is one more thing that can
+# differ from a known-good reference for no benefit.
+kernel=kernel8.img
+
+# Serial console on the UART pins. Costs nothing when unused and is the only
+# way to see firmware and early-kernel output when the panel is dark.
+enable_uart=1
 
 # The uConsole has no HDMI-attached display at boot and its DSI panel is not a
 # standard "LCD"; let the overlay describe it instead of the firmware probing.

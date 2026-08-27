@@ -1,0 +1,91 @@
+#!/bin/bash
+# Configure wifi and SSH from a plain text file on the FAT boot partition.
+#
+# A headless first boot has a chicken-and-egg problem: you cannot configure wifi
+# without a display, and you cannot get a shell without wifi. Raspberry Pi OS
+# solved this with wpa_supplicant.conf on the boot partition; this is the same
+# idea for NetworkManager.
+#
+# Drop /boot/uconsole-wifi.txt on the card from any machine:
+#
+#     ssid=YourNetwork
+#     psk=YourPassphrase
+#     country=NL          # optional, sets the regulatory domain
+#     hidden=false        # optional
+#
+# The file is DELETED after use, so the passphrase does not linger in a FAT
+# partition that anyone can read.
+set -uo pipefail
+
+CONF=/boot/uconsole-wifi.txt
+[[ -f "$CONF" ]] || exit 0
+
+ssid=""; psk=""; country=""; hidden="false"
+while IFS='=' read -r k v; do
+  k="${k%%[[:space:]]*}"; v="${v#"${v%%[![:space:]]*}"}"; v="${v%"${v##*[![:space:]]}"}"
+  case "$k" in
+    ssid)    ssid="$v" ;;
+    psk)     psk="$v" ;;
+    country) country="$v" ;;
+    hidden)  hidden="$v" ;;
+  esac
+done < <(grep -vE '^\s*(#|$)' "$CONF")
+
+if [[ -z "$ssid" ]]; then
+  echo "uconsole-wifi: no ssid= in $CONF, nothing to do" >&2
+  exit 0
+fi
+
+[[ -n "$country" ]] && iw reg set "$country" 2>/dev/null
+
+# Written directly as a NetworkManager keyfile rather than via nmcli, so it does
+# not depend on NetworkManager already being up when this runs.
+KEYFILE=/etc/NetworkManager/system-connections/uconsole-wifi.nmconnection
+mkdir -p "$(dirname "$KEYFILE")"
+{
+  echo "[connection]"
+  echo "id=uconsole-wifi"
+  echo "type=wifi"
+  echo "autoconnect=true"
+  echo
+  echo "[wifi]"
+  echo "mode=infrastructure"
+  echo "ssid=${ssid}"
+  [[ "$hidden" == "true" ]] && echo "hidden=true"
+  echo
+  if [[ -n "$psk" ]]; then
+    echo "[wifi-security]"
+    echo "key-mgmt=wpa-psk"
+    echo "psk=${psk}"
+    echo
+  fi
+  echo "[ipv4]"
+  echo "method=auto"
+  echo
+  echo "[ipv6]"
+  echo "method=auto"
+} > "$KEYFILE"
+# NetworkManager refuses to load a keyfile that others can read.
+chmod 600 "$KEYFILE"
+chown root:root "$KEYFILE"
+
+# A shell is the whole point of this exercise.
+systemctl enable --now sshd 2>/dev/null
+
+systemctl reload-or-restart NetworkManager 2>/dev/null
+nmcli connection reload 2>/dev/null
+nmcli connection up uconsole-wifi 2>/dev/null
+
+# Remove the passphrase from the readable FAT partition, but leave a receipt so
+# it is obvious the file was consumed rather than ignored.
+rm -f "$CONF"
+{
+  echo "uconsole-wifi.txt was applied and removed on $(date -u '+%Y-%m-%d %H:%M:%S UTC')"
+  echo "connection: uconsole-wifi -> ssid ${ssid}"
+  echo "sshd: $(systemctl is-enabled sshd 2>/dev/null) / $(systemctl is-active sshd 2>/dev/null)"
+  echo "address: $(ip -4 -br addr show scope global 2>/dev/null | tr -s ' ')"
+  echo
+  echo "To change wifi later, drop a new uconsole-wifi.txt on this partition."
+} > /boot/uconsole-wifi-applied.txt
+sync
+exit 0
