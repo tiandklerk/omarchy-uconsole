@@ -38,6 +38,21 @@ parted -s "$IMG" mkpart primary ext4  "$((BOOT_SIZE_MB + 1))MiB" 100%
 parted -s "$IMG" set 1 boot on
 parted -s "$IMG" set 1 lba on
 
+# CRITICAL: force the MBR partition type to 0x0c (W95 FAT32 LBA).
+#
+# The Raspberry Pi firmware finds its boot partition by this type byte. parted's
+# `mkpart primary fat32` does NOT reliably set it - here it left 0x83 (Linux),
+# which produces a board that is completely dead at power-on: no config.txt is
+# ever read, no kernel is ever loaded, and the panel never lights. The symptom
+# looks like a broken kernel or a bad flash, and is neither.
+# Written directly rather than via sfdisk, which Debian splits into a separate
+# package: the MBR is fixed-layout, so the type byte of partition 1 is at
+# offset 446 + 4 = 450. \014 is 0x0c.
+printf '\014' | dd of="$IMG" bs=1 seek=450 count=1 conv=notrunc status=none
+ptype=$(od -An -tx1 -j450 -N1 "$IMG" | tr -d ' ')
+[[ "$ptype" == "0c" ]] || die_msg "boot partition type is 0x$ptype, expected 0x0c"
+say "boot partition type set to 0x0c (FAT32 LBA)"
+
 LOOP="$(losetup -fP --show "$IMG")"
 BOOT_DEV="${LOOP}p1"; ROOT_DEV="${LOOP}p2"
 say "loop device: $LOOP"

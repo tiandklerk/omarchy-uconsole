@@ -47,6 +47,18 @@ mount -o ro "${LOOP}p2" /m    || { echo "cannot mount root partition"; exit 1; }
 mount -o ro "${LOOP}p1" /m/boot || { echo "cannot mount boot partition"; exit 1; }
 
 echo
+echo "Partition table"
+# The Raspberry Pi firmware locates its boot partition by MBR type byte. A
+# FAT32 filesystem sitting in a partition typed 0x83 is invisible to it, and
+# the board is simply dead at power-on. This check exists because that shipped
+# once: every file was correct and the image still could not boot.
+PTYPE=$(od -An -tx1 -j450 -N1 "$IMG_FILE" | tr -d " ")
+[[ "$PTYPE" == "0c" ]]
+chk "boot partition MBR type is 0x0c FAT32 LBA (found 0x$PTYPE)" $?
+[[ "$(od -An -tx1 -j446 -N1 "$IMG_FILE" | tr -d " ")" == "80" ]]
+chk "boot partition is marked bootable" $?
+
+echo
 echo "Boot partition"
 [[ -f /m/boot/$KERNEL_IMAGE_NAME ]]; chk "kernel image ($KERNEL_IMAGE_NAME)" $?
 [[ -f /m/boot/config.txt ]];         chk "config.txt" $?
