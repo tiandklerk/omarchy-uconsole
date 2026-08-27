@@ -62,16 +62,29 @@ account, and on first boot `omarchy-provision-owner` runs on tty1 — before the
 display manager — and asks you to create the owner account. Answer it and the
 desktop starts.
 
-Behind that there is a maintenance account for recovery:
+Behind that there is a recovery account, for when provisioning fails or the
+panel does not come up. Its password is **generated per build** and written to:
 
 ```
-user: alarm
-pass: alarm
+out/RECOVERY-PASSWORD.txt
 ```
 
-**Change or remove it.** These are the Arch Linux ARM defaults and are public;
-`root` has the same password. Set your own before building by editing
-`DEFAULT_USER` / `DEFAULT_PASS` in `config/build.env`.
+That file is gitignored and never published. It is not `alarm`/`alarm` — those
+are the Arch Linux ARM defaults, they are public knowledge, and this image can
+run sshd, so shipping them would be a real vulnerability rather than an
+inconvenience.
+
+To choose your own instead:
+
+```bash
+DEFAULT_PASS='something-you-picked' ./build.sh
+```
+
+If you flashed an image someone else built, change it immediately:
+
+```bash
+sudo passwd alarm && sudo passwd -l root
+```
 
 If provisioning does not appear, the image fell back to plain login — use the
 maintenance account and check `journalctl -u omarchy-provision-owner`.

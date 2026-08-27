@@ -65,6 +65,19 @@ privileged containers.
 Tunables live in [`config/build.env`](config/build.env) — kernel branch, image
 size, hostname, default user, CM4 vs CM5.
 
+## Security notes
+
+- The **recovery account password is generated per build** and written to
+  `out/RECOVERY-PASSWORD.txt` (gitignored). No default password ships in this
+  repository.
+- **sshd is off** unless you opt in by placing `uconsole-wifi.txt` on the boot
+  partition; that file is deleted after first use so the passphrase does not
+  linger on a readable FAT partition.
+- The image currently sets `DisableSandbox` in `pacman.conf`, because
+  `bcm2712_defconfig` does not build Landlock and pacman 7 refuses to run
+  without it. `CONFIG_SECURITY_LANDLOCK=y` is in the kernel fragment; once a
+  kernel carrying it ships, that workaround should be removed.
+
 ## Documentation
 
 - [Architecture](docs/01-architecture.md) — why each piece is the way it is

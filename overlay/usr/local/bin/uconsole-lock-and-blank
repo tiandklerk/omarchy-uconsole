@@ -1,0 +1,29 @@
+#!/bin/bash
+# Lock the session and blank the panel - the uConsole's stand-in for suspend.
+#
+# Why not actually suspend: Raspberry Pi builds bcm2712_defconfig without
+# CONFIG_SUSPEND and CONFIG_HIBERNATION, so /sys/power/state is empty. The
+# kernel offers no sleep state at all, not even s2idle, and the only swap is
+# zram (which lives in RAM, so hibernation has nowhere to write). Locking and
+# blanking preserves the session and resumes instantly, which is the thing
+# actually wanted; it just does not save power the way a real sleep would.
+#
+# Waking needs no counterpart script: Omarchy's default/hypr/input.lua sets
+# key_press_enables_dpms and mouse_move_enables_dpms, so any key or trackball
+# movement turns the panel back on.
+set -uo pipefail
+
+# Lock first, so the desktop is never briefly visible on wake.
+if command -v omarchy-system-lock >/dev/null 2>&1; then
+  omarchy-system-lock
+else
+  loginctl lock-session 2>/dev/null || true
+fi
+
+# Let the lock surface map before the panel goes dark.
+sleep 0.4
+
+# Blank the panel. The backlight dominates idle draw on this device, so this is
+# where the power actually goes. Syntax is Omarchy 4's Lua dispatcher form -
+# plain `hyprctl dispatch dpms off` is rejected by its non-legacy parser.
+hyprctl dispatch 'hl.dsp.dpms({ action = "disable" })' >/dev/null 2>&1 || true

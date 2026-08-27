@@ -38,6 +38,31 @@ PKGLIST="$HERE/../../packages/base.packages"
 } > "$PKGLIST"
 info "$(grep -cvE '^\s*(#|$)' "$PKGLIST") packages from the aarch64 repos"
 
+# --- recovery account password --------------------------------------------
+# Generate a per-image password unless one was set explicitly. A published
+# default on an image that can run sshd is a genuine vulnerability, and this
+# repository is public.
+if [[ -z "${DEFAULT_PASS:-}" ]]; then
+  DEFAULT_PASS="$(tr -dc 'A-Za-z0-9' < /dev/urandom | head -c 20)"
+  mkdir -p "$OUT_DIR"
+  umask 077
+  {
+    echo "Recovery account for $(basename "${IMG_NAME}").img"
+    echo
+    echo "  user:     $DEFAULT_USER"
+    echo "  password: $DEFAULT_PASS"
+    echo
+    echo "Generated per-build; not committed and not published anywhere."
+    echo "Omarchy creates your real account on first boot - this exists only for"
+    echo "recovery (no display, failed provisioning, SSH debugging)."
+    echo
+    echo "To pick your own instead:  DEFAULT_PASS=... ./build.sh"
+  } > "$OUT_DIR/RECOVERY-PASSWORD.txt"
+  umask 022
+  warn "recovery password generated -> $OUT_DIR/RECOVERY-PASSWORD.txt"
+fi
+export DEFAULT_PASS
+
 build_image "$IMG_ALARM" "$HERE"
 
 # The rootfs must be built as root (ownership, setuid bits, device nodes) and
