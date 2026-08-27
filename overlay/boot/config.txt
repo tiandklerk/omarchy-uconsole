@@ -36,6 +36,14 @@ dtoverlay=dwc2,dr_mode=host
 dtparam=ant2
 
 [cm5]
+# The GPU. THIS LINE IS LOAD-BEARING: without it the v3d render node never
+# appears, Mesa falls back to llvmpipe, EGL fails with "failed to create dri2
+# screen", and the compositor draws nothing onto a perfectly lit panel. The
+# uConsole overlay below brings up the DSI *display*; the GPU is separate.
+# ak-rex's config carries this under a [pi5] section - dropping that section
+# when writing a CM5-specific config is exactly how this gets lost.
+dtoverlay=vc4-kms-v3d-pi5
+
 # Brings up: the 480x1280 DSI panel, the OCP8178 backlight, the ClockworkPi
 # matrix keyboard/trackball, the AXP228 PMIC (battery + charging), and the
 # audio codec. Provided by ak-rex's kernel tree - not present in mainline or

@@ -69,6 +69,11 @@ chk "clockworkpi-uconsole-${UC_MODEL}.dtbo (the panel/keyboard/battery overlay)"
 grep -q "^dtoverlay=clockworkpi-uconsole-${UC_MODEL}" /m/boot/config.txt
 chk "config.txt selects the uConsole overlay" $?
 grep -q "^dtparam=ant2" /m/boot/config.txt; chk "external wifi antenna enabled" $?
+# A display without a GPU renders nothing: Mesa drops to llvmpipe and the
+# compositor shows a black screen on a working panel.
+grep -qE "^dtoverlay=vc4-kms-v3d(-pi5)?$" /m/boot/config.txt
+chk "GPU overlay enabled (vc4-kms-v3d) - without it EGL fails and nothing draws" $?
+[[ -f /m/boot/overlays/vc4-kms-v3d-pi5.dtbo ]]; chk "vc4-kms-v3d-pi5.dtbo present" $?
 
 echo
 echo "Boot arguments"
