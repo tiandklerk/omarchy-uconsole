@@ -118,6 +118,12 @@ rsync -a --chown=root:root /src/overlay/usr/ "$ROOTFS/usr/"
 # uConsole monitor/input overrides.
 
 # --- system configuration --------------------------------------------------
+# The hwdb source files are useless until compiled into /etc/udev/hwdb.bin,
+# which is what udev actually reads. Without this the Super-key remap silently
+# does nothing.
+say "compiling the udev hardware database"
+inchroot 'systemd-hwdb update' && echo "  hwdb.bin regenerated"
+
 say "configuring system"
 echo "$DEFAULT_HOSTNAME" > "$ROOTFS/etc/hostname"
 ln -sf "/usr/share/zoneinfo/$DEFAULT_TZ" "$ROOTFS/etc/localtime"

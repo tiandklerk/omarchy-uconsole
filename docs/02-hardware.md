@@ -88,6 +88,21 @@ A membrane matrix keyboard and an optical trackball, presented by the
 ClockworkPi HID firmware. Both come up through the device-tree overlay as
 standard input devices — no userspace driver.
 
+**There is no Super key.** The bottom row is `Fn Ctrl Alt | space | Alt Ctrl Fn`,
+and Omarchy binds almost its entire interface to SUPER, so without a remap most
+of the desktop is unreachable. `overlay/etc/udev/hwdb.d/70-uconsole-super-key.hwdb`
+remaps **Right Alt to Left Meta**: the least-missed key on a US layout, since
+there is a second Alt and AltGr goes unused.
+
+This is done at the evdev/hwdb layer rather than as an xkb option, for two
+reasons: xkb has no standard "right alt becomes super" option, and hwdb applies
+on the TTY and in the sddm greeter too, not only inside Hyprland. The remap does
+nothing until `systemd-hwdb update` compiles it into `/etc/udev/hwdb.bin`, which
+stage 20 does.
+
+Fn cannot be remapped: it is handled in the keyboard firmware and never reaches
+evdev.
+
 Tuned in `overlay/skel/.config/hypr/input.lua`: slower key repeat (the matrix
 rattles at Omarchy's default rate) and raised pointer sensitivity (the trackball
 is small relative to a 1280 px-wide screen).

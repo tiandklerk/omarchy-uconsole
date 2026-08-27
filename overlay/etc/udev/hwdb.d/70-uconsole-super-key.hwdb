@@ -1,0 +1,22 @@
+# Give the uConsole a Super key.
+#
+# The uConsole keyboard has no Super/Meta key at all - the bottom row is
+# Fn Ctrl Alt | space | Alt Ctrl Fn - and Omarchy binds almost everything to
+# SUPER, so out of the box most of the desktop is unreachable.
+#
+# Right Alt is remapped to Left Meta (Super). It is the least-missed key on a US
+# layout: there is a second Alt on the left, and AltGr is unused without an
+# international layout. Everything else on that row is genuinely needed, and Fn
+# is handled in the keyboard firmware so it never reaches evdev to be remapped.
+#
+# Done at the evdev/hwdb layer rather than with an xkb option because xkb has no
+# standard "right alt becomes super" option, and because this way the remap also
+# applies on the TTY and in the sddm greeter, not just inside Hyprland.
+#
+# 0x700e6 is the USB HID usage for Right Alt (Keyboard RightAlt, page 0x07).
+#
+# After changing this file:
+#   sudo systemd-hwdb update && sudo udevadm trigger --subsystem-match=input
+
+evdev:name:Clockwork uConsole Keyboard:*
+ KEYBOARD_KEY_700e6=leftmeta
