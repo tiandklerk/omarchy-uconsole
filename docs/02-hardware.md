@@ -91,8 +91,10 @@ standard input devices — no userspace driver.
 **There is no Super key.** The bottom row is `Fn Ctrl Alt | space | Alt Ctrl Fn`,
 and Omarchy binds almost its entire interface to SUPER, so without a remap most
 of the desktop is unreachable. `overlay/etc/udev/hwdb.d/70-uconsole-super-key.hwdb`
-remaps **Right Alt to Left Meta**: the least-missed key on a US layout, since
-there is a second Alt and AltGr goes unused.
+remaps **Left Alt to Left Meta**, putting Super where the thumb expects it on
+any other keyboard. Right Alt is untouched and remains Alt, so Alt-based
+shortcuts still work. Remapping the right one instead is functionally identical
+and feels wrong in use — the commented alternative is in the file.
 
 This is done at the evdev/hwdb layer rather than as an xkb option, for two
 reasons: xkb has no standard "right alt becomes super" option, and hwdb applies
