@@ -24,9 +24,18 @@ ignore_lcd=1
 disable_overscan=1
 max_framebuffers=2
 
-# On-board audio via the AXP PMIC codec, routed to GPIO 12/13.
+# On-board audio. The uConsole's speaker amp is wired to GPIO 12/13 expecting
+# PWM audio, but the two Compute Modules produce it completely differently, so
+# the overlay lives in the per-model sections below:
+#
+#   CM4 (BCM2711): the VPU converts PCM to PWM        -> audremap
+#   CM5 (BCM2712): no VPU path at all; an RP1 hardware
+#                  block does the conversion          -> audremap-pi5
+#
+# Using plain `audremap` on a CM5 is silently inert: the stream plays into the
+# RP1's spdif-dit dummy codec and nothing reaches the speaker. Needs kernel
+# >= 6.12.17 for the RP1 audio-out driver.
 dtparam=audio=on
-dtoverlay=audremap,pins_12_13
 
 # uConsole's USB is host-only on the internal hub.
 dtoverlay=dwc2,dr_mode=host
@@ -36,6 +45,16 @@ dtoverlay=dwc2,dr_mode=host
 dtparam=ant2
 
 [cm5]
+dtoverlay=audremap-pi5,pins_12_13
+
+# Speaker amplifier enable. VERIFIED ON HARDWARE: without this the whole audio
+# chain is correct and completely silent - PipeWire routes the stream, the RP1
+# block converts it, and the amp is simply powered down. ak-rex sets the same
+# line for the CM3+/CM4s variants; the CM5 needs it too.
+# GPIO11 is gpio-580 in the kernel's numbering, which is the "GPIO 580" the
+# Raspberry Pi forum thread refers to.
+gpio=11=op,dh
+
 # The GPU. THIS LINE IS LOAD-BEARING: without it the v3d render node never
 # appears, Mesa falls back to llvmpipe, EGL fails with "failed to create dri2
 # screen", and the compositor draws nothing onto a perfectly lit panel. The
@@ -51,6 +70,7 @@ dtoverlay=vc4-kms-v3d-pi5
 dtoverlay=clockworkpi-uconsole-cm5
 
 [cm4]
+dtoverlay=audremap,pins_12_13
 dtoverlay=clockworkpi-uconsole-cm4
 
 [all]

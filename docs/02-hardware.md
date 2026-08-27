@@ -101,9 +101,29 @@ dtparam=audio=on
 dtoverlay=audremap,pins_12_13
 ```
 
-Rex's Debian images ship a `clockworkpi-audio` package for mixer defaults. There
-is no Arch equivalent; if levels are wrong on first boot this is the most likely
-reason. See [05-first-boot.md](05-first-boot.md).
+**Two things are required, and each fails silently on its own.**
+
+The uConsole's speaker amp is wired to GPIO 12/13 expecting PWM audio, but the
+two Compute Modules generate it completely differently:
+
+| Module | PCM to PWM | Overlay |
+|---|---|---|
+| CM4 (BCM2711) | done on the VPU | `audremap` |
+| CM5 (BCM2712) | done by an RP1 hardware block | `audremap-pi5` |
+
+Using plain `audremap` on a CM5 is **inert with no error**: the stream plays
+into the RP1's `linux,spdif-dit` dummy codec and never reaches a pin. Needs
+kernel >= 6.12.17.
+
+Second, the amplifier must be switched on: `gpio=11=op,dh`. Without it every
+layer reports success — PipeWire routes the stream, the RP1 converts it — and
+the speaker is simply unpowered. GPIO11 appears as `gpio-580` in the kernel's
+numbering.
+
+Both were confirmed on hardware. Rex's Debian images also ship a
+`clockworkpi-audio` package for mixer defaults; there is no Arch equivalent, so
+if levels are wrong check `wpctl get-volume @DEFAULT_AUDIO_SINK@` — PipeWire
+starts this sink around 0.4.
 
 ## WiFi and Bluetooth
 
