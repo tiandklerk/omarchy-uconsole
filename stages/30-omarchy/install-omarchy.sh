@@ -206,6 +206,56 @@ inchroot 'systemctl enable uconsole-firstboot-omarchy.service' || \
 say "enabling the display manager"
 inchroot 'systemctl enable sddm' || echo "  sddm not installed; Omarchy will start from a TTY"
 
+# --- repoint pacman at ARM repositories ------------------------------------
+# omarchy-apply-system runs install/post-install/pacman.sh, which installs
+# Omarchy's own pacman.conf and mirrorlist. Both are x86_64-shaped and leave an
+# aarch64 system unable to install ANYTHING:
+#
+#   * the mirrorlist points at mirror.omarchy.org, which serves x86_64 only -
+#     every aarch64 package 404s
+#   * [omarchy] uses pkgs.omarchy.org/stable/$arch; only the bare /aarch64 path
+#     is published, so stable/ 404s too
+#   * it declares [multilib], which does not exist on aarch64 at all
+#   * it drops [alarm] and [aur], the Arch Linux ARM repos this system was
+#     installed from
+#
+# This has to run AFTER apply-system, because that is what overwrites it.
+say "repointing pacman at the Arch Linux ARM repositories"
+echo 'Server = http://mirror.archlinuxarm.org/$arch/$repo' > "$ROOTFS/etc/pacman.d/mirrorlist"
+
+# Keep Omarchy's [options] block (Color, ILoveCandy, ParallelDownloads and so
+# on) and replace only the repository list, which is the part that is wrong for
+# aarch64.
+awk '/^\[core\]/{exit} {print}' "$ROOTFS/etc/pacman.conf" > "$ROOTFS/etc/pacman.conf.new"
+cat >> "$ROOTFS/etc/pacman.conf.new" <<'PACMAN'
+[core]
+Include = /etc/pacman.d/mirrorlist
+
+[extra]
+Include = /etc/pacman.d/mirrorlist
+
+# Arch Linux ARM's own repositories - the base system was installed from these
+# and Omarchy's generated config drops them.
+[alarm]
+Include = /etc/pacman.d/mirrorlist
+
+[aur]
+Include = /etc/pacman.d/mirrorlist
+
+# Upstream publishes aarch64 at the bare path; stable/aarch64 returns 404.
+[omarchy]
+SigLevel = Optional TrustAll
+Server = https://pkgs.omarchy.org/$arch
+PACMAN
+mv "$ROOTFS/etc/pacman.conf.new" "$ROOTFS/etc/pacman.conf"
+# pacman 7 sandboxes downloads with Landlock, which bcm2712_defconfig does not
+# build (the running system reports "LSMs: capability" only). Without this,
+# every pacman operation fails with "Landlock is not supported by the kernel".
+# Remove once the kernel ships CONFIG_SECURITY_LANDLOCK.
+grep -q '^DisableSandbox' "$ROOTFS/etc/pacman.conf" || \
+  sed -i '/^\[options\]/a DisableSandbox' "$ROOTFS/etc/pacman.conf"
+echo "  repositories: $(grep -cE '^\[' "$ROOTFS/etc/pacman.conf") sections, sandbox disabled"
+
 say "restoring pacman's space check for the shipped system"
 sed -i 's/^#CheckSpace/CheckSpace/' "$ROOTFS/etc/pacman.conf"
 

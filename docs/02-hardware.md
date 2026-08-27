@@ -159,6 +159,25 @@ ext4 rather than btrfs: Omarchy's btrfs setup exists to serve limine-based
 snapshot rollback, which has no bootloader to hook into here, and ext4 can be
 grown in place with `resize2fs`.
 
+## Package management on ARM
+
+Two of Omarchy's assumptions break pacman on aarch64, and both are corrected by
+stage 30 *after* `omarchy-apply-system` runs (it is what introduces them):
+
+**Mirrors.** `install/post-install/pacman.sh` installs Omarchy's own
+`pacman.conf` and mirrorlist. They point at `mirror.omarchy.org`, which serves
+x86_64 only, declare a `[multilib]` repo that does not exist on aarch64, drop
+Arch Linux ARM's `[alarm]` and `[aur]` repos, and use
+`pkgs.omarchy.org/stable/$arch` where only the bare `/aarch64` path is
+published. The result is a system that cannot install anything.
+
+**Landlock.** pacman 7 confines downloads with Landlock and refuses to run
+without it — `restricting filesystem access failed because Landlock is not
+supported by the kernel`. `bcm2712_defconfig` does not enable it; the running
+system reports `LSMs: capability` only. The image ships `DisableSandbox` as a
+workaround, and `CONFIG_SECURITY_LANDLOCK=y` is in the kernel fragment for the
+next kernel build, which is the real fix.
+
 ## 4G modem
 
 Some uConsoles carry a 4G module. Rex ships a `uconsole-4g` Debian package for
