@@ -18,6 +18,7 @@ build_image "$IMG_ALARM" "$HERE/../stages/20-rootfs"
 
 run_in_root "$IMG_ALARM" --privileged \
   -v "$(cd "$(dirname "$IMG")" && pwd):/img" \
+  -v "$OUT_DIR/packages:/repo:ro" \
   -e "IMG_FILE=/img/$(basename "$IMG")" \
   -e "UC_MODEL=$UC_MODEL" \
   -e "KERNEL_IMAGE_NAME=$KERNEL_IMAGE_NAME" \
@@ -105,6 +106,26 @@ grep -q "transform = 3" /m/etc/skel/.config/hypr/monitors.lua 2>/dev/null
 chk "panel rotation configured (transform 3)" $?
 [[ -f /m/etc/udev/rules.d/99-uconsole-power.rules ]]; chk "battery charge-rate rule present" $?
 [[ -x /m/usr/local/bin/uconsole-firstboot-resize ]]; chk "first-boot resize script present" $?
+
+# Every package we went to the trouble of building for aarch64 must actually be
+# IN the image. This has been wrong twice: the rootfs was populated from a repo
+# snapshot taken before later packages finished building, so xdg-terminal-exec
+# and then mise-bin shipped missing and broke Omarchy at runtime with
+# "command not found". Building a package is not installing it.
+missing=""
+for pkg in /repo/*.pkg.tar.*; do
+  [[ -e "$pkg" ]] || continue
+  base=$(basename "$pkg"); name=${base%-[0-9]*}
+  ls -d /m/var/lib/pacman/local/${name}-[0-9]* >/dev/null 2>&1 || missing="$missing $name"
+done
+[[ -z "$missing" ]]
+chk "all locally built packages are installed in the image${missing:+ - MISSING:$missing}" $?
+
+# suspend hard-locks this hardware (s2idle never resumes), so the sleep targets
+# must be masked and the Omarchy menu entry hidden.
+[[ -L /m/etc/systemd/system/suspend.target ]]; chk "suspend.target masked" $?
+[[ -e /m/etc/skel/.local/state/omarchy/toggles/suspend-off ]]
+chk "suspend menu entry hidden" $?
 
 echo
 if (( fail )); then

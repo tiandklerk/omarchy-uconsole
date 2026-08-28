@@ -111,17 +111,20 @@ does not advertise. Compare `hyprctl monitors` against
 nothing on earlier builds, because `bcm2712_defconfig` ships no sleep support at
 all — `/sys/power/state` was empty, so systemd had no state to write.
 
-The kernel here builds `CONFIG_SUSPEND=y`, which provides **s2idle** only:
+**Suspend does not work on this hardware and is deliberately disabled.**
 
-```bash
-cat /sys/power/state     # expect: freeze
-```
+`CONFIG_SUSPEND=y` was tried, which provides s2idle. Tested on a CM5 uConsole it
+**hard-locks the device**: it suspends and never resumes, requiring a power
+cycle. This is why Raspberry Pi ships `bcm2712_defconfig` with no sleep support
+in the first place.
 
-s2idle idles the CPUs but leaves devices powered — it is not a laptop's
-suspend-to-RAM, and power draw stays well above off. Raspberry Pi disables this
-deliberately, so **resume is unproven on this hardware**. Test it when you can
-afford to hold the power button; the most likely failure is suspending and
-returning to a dead panel.
+The image therefore masks `sleep.target`, `suspend.target`, `hibernate.target`,
+`hybrid-sleep.target` and `suspend-then-hibernate.target`, and seeds the Omarchy
+`suspend-off` toggle so the menu entry is hidden. `CONFIG_SUSPEND` is commented
+out in the kernel fragment.
+
+If you want to experiment, unmask the targets — but expect to hold the power
+button, and do not do it with unsaved work open.
 
 Hibernation is not available: it needs a real swap device, and the only swap
 here is zram, which lives in RAM.
