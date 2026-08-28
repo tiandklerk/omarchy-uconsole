@@ -1,0 +1,31 @@
+#!/bin/bash
+# Lock the session and blank the panel - the uConsole's stand-in for suspend.
+#
+# Real suspend does not work here. bcm2712_defconfig ships no sleep support at
+# all, and enabling CONFIG_SUSPEND for s2idle was tested on hardware: it
+# HARD-LOCKS the device, suspending with no resume and requiring a power cycle.
+# Hibernation needs a real swap device and the only swap is zram, which is RAM.
+#
+# So this preserves the session instead of saving it: lock, then turn the panel
+# off. Resume is instant and nothing is lost, which is the thing actually
+# wanted. It does not save power the way a real sleep would - the backlight is
+# most of the idle draw, so blanking it is where the saving comes from, but the
+# SoC keeps running.
+#
+# Waking needs no counterpart script: Omarchy sets key_press_enables_dpms and
+# mouse_move_enables_dpms, so any key or trackball movement restores the panel.
+set -uo pipefail
+
+# Lock first, so the desktop is never briefly visible on wake.
+if command -v omarchy-system-lock >/dev/null 2>&1; then
+  omarchy-system-lock
+else
+  loginctl lock-session 2>/dev/null || true
+fi
+
+# Let the lock surface map before the panel goes dark.
+sleep 0.4
+
+# Omarchy 4 uses a Lua dispatcher; plain `hyprctl dispatch dpms off` is rejected
+# by its non-legacy parser. This form is what Omarchy's own scripts use.
+hyprctl dispatch 'hl.dsp.dpms({ action = "disable" })' >/dev/null 2>&1 || true

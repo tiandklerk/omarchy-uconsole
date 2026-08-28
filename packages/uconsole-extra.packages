@@ -20,5 +20,17 @@ cloud-guest-utils
 mesa-utils
 v4l-utils
 
-# Firmware for the CM5's Broadcom wifi/bluetooth radio.
-linux-firmware
+# Firmware. NOT the `linux-firmware` meta-package: that pulls every vendor
+# subpackage and put 1.0 GB in the image, of which ~840 MB was for hardware a
+# CM5 cannot physically have - 387 MB of Intel, 152 MB of NVIDIA, 87 MB of
+# AMDGPU, plus Atheros and MediaTek wifi. The same reasoning already excludes
+# broadcom-wl and the NVIDIA/Intel driver stacks in packages/excluded.packages.
+#
+# Kept: broadcom (the CM5's own radio), whence (licence text), and three small
+# ones that a USB peripheral might plausibly need - realtek covers most USB
+# ethernet and wifi dongles, cirrus covers audio codecs.
+linux-firmware-broadcom
+linux-firmware-whence
+linux-firmware-realtek
+linux-firmware-cirrus
+linux-firmware-other

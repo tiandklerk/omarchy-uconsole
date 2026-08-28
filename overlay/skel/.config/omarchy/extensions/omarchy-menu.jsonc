@@ -1,0 +1,25 @@
+// uConsole menu overrides.
+//
+// Merged on top of /usr/share/omarchy/default/omarchy/omarchy-menu.jsonc by the
+// Omarchy shell, so these survive package updates - unlike editing the shipped
+// file, which omarchy update would overwrite.
+{
+  // Replaces "Suspend". Real suspend hard-locks this hardware: the CM5 has no
+  // working sleep state, and s2idle suspends without ever resuming. This locks
+  // the session and blanks the panel instead - instant resume, nothing lost,
+  // though the SoC keeps running so it is not a power saving in the way sleep
+  // would be. Labelled for what it does rather than what it replaces.
+  "system.suspend": {
+    "icon": "󰒲",
+    "label": "Sleep (screen off)",
+    "action": "uconsole-lock-and-blank"
+  },
+
+  // The Omarchy apps with no prebuilt aarch64 package. They build natively on
+  // the device in minutes; emulating them on an x86 build host took hours.
+  "install.uconsole-extras": {
+    "icon": "󰉉",
+    "label": "uConsole extras (localsend, obsidian, ...)",
+    "action": "omarchy-launch-floating-terminal-with-presentation 'uconsole-install-extras'"
+  }
+}

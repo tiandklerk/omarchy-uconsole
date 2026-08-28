@@ -9,7 +9,22 @@ because those have no aarch64 build and must be compiled.
 not, and the tables in [03-not-included.md](03-not-included.md) are generated
 from it.
 
-## The easy way: build them on the uConsole
+## The easy way: `uconsole-install-extras`
+
+The image ships a helper, also reachable from the Omarchy menu under
+**Install → uConsole extras**:
+
+```bash
+uconsole-install-extras            # lists them, asks, installs all
+uconsole-install-extras localsend  # or just one
+```
+
+It builds with `yay` on the device. That is genuinely the right place to do it:
+a CM5 is a real aarch64 machine and compiles these in minutes, where emulating
+them on an x86 build host took hours — `localsend` spent over an hour on Flutter
+before being abandoned.
+
+## Doing it by hand
 
 This is the natural Arch workflow and it needs no emulation. The image ships
 `base-devel`, so once you have booted:

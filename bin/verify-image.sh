@@ -124,8 +124,17 @@ chk "all locally built packages are installed in the image${missing:+ - MISSING:
 # suspend hard-locks this hardware (s2idle never resumes), so the sleep targets
 # must be masked and the Omarchy menu entry hidden.
 [[ -L /m/etc/systemd/system/suspend.target ]]; chk "suspend.target masked" $?
-[[ -e /m/etc/skel/.local/state/omarchy/toggles/suspend-off ]]
-chk "suspend menu entry hidden" $?
+[[ -x /m/usr/local/bin/uconsole-lock-and-blank ]]; chk "lock-and-blank script present" $?
+grep -q "uconsole-lock-and-blank" /m/etc/skel/.config/omarchy/extensions/omarchy-menu.jsonc 2>/dev/null
+chk "menu Suspend entry replaced with working Sleep" $?
+
+# The linux-firmware meta-package drags in every vendor blob - a gigabyte of
+# Intel/NVIDIA/AMD firmware for hardware a CM5 cannot have.
+! ls -d /m/var/lib/pacman/local/linux-firmware-[0-9]* >/dev/null 2>&1
+chk "linux-firmware meta-package not installed (pulls ~840MB of unusable blobs)" $?
+[[ -f "/m/usr/lib/firmware/brcm/brcmfmac43455-sdio.raspberrypi,5-compute-module.txt" ]]
+chk "CM5 wifi NVRAM present" $?
+[[ -f /m/usr/lib/firmware/brcm/BCM4345C0.hcd ]]; chk "bluetooth firmware present" $?
 
 echo
 if (( fail )); then

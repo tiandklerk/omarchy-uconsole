@@ -1,0 +1,71 @@
+#!/bin/bash
+# Install the Omarchy packages that are not prebuilt for aarch64.
+#
+# A handful of Omarchy's optional applications have no aarch64 build and were
+# not baked into the image, either because they are AUR-only or because building
+# them under QEMU emulation on the build host took absurdly long (localsend
+# spent over an hour compiling Flutter and was abandoned).
+#
+# On the device this is a non-issue: a CM5 is a real aarch64 machine, so yay
+# builds them natively in minutes rather than hours. This just saves you looking
+# up which ones and typing them out.
+set -uo pipefail
+
+EXTRAS=(
+  localsend            # file transfer; builds fine, just slow to emulate
+  obsidian             # notes
+  pinta                # image editor (pulls in dotnet-runtime)
+  obs-studio           # screen recording; long build, no hardware encode here
+  qemu-user-static-binfmt
+)
+
+usage() {
+  cat <<USAGE
+Usage: uconsole-install-extras [package...]
+
+With no arguments, lists what is available and asks before installing.
+Pass names to install only those.
+
+Available:
+$(printf '  %s\n' "${EXTRAS[@]}")
+USAGE
+}
+
+case "${1:-}" in
+  -h|--help|help) usage; exit 0 ;;
+esac
+
+if ! command -v yay >/dev/null 2>&1; then
+  echo "yay is not installed - cannot build AUR packages." >&2
+  exit 1
+fi
+
+if (($#)); then
+  targets=("$@")
+else
+  usage
+  echo
+  read -rp "Install all of the above? [y/N] " reply
+  [[ "$reply" =~ ^[Yy]$ ]] || { echo "Nothing installed."; exit 0; }
+  targets=("${EXTRAS[@]}")
+fi
+
+echo "Building natively on this device. Some of these are large; obs-studio in"
+echo "particular can take a while even here."
+echo
+
+failed=()
+for pkg in "${targets[@]}"; do
+  echo "==> $pkg"
+  yay -S --needed --noconfirm "$pkg" || failed+=("$pkg")
+done
+
+if ((${#failed[@]})); then
+  echo
+  echo "Did not install: ${failed[*]}"
+  echo "Some packages genuinely have no aarch64 support - see"
+  echo "docs/03-not-included.md in the omarchy-uconsole repository."
+  exit 1
+fi
+echo
+echo "Done."
