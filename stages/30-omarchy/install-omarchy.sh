@@ -265,4 +265,18 @@ sed -i 's/^#CheckSpace/CheckSpace/' "$ROOTFS/etc/pacman.conf"
 # NOT `pacman -Scc --noconfirm`: that prompt defaults to No, so --noconfirm
 # answers No and the cache is silently kept in the shipped image.
 rm -rf "$ROOTFS/var/cache/pacman/pkg/"*
+# Remove the build container's resolv.conf, copied in at the top so the chroot
+# could reach the mirrors. Leaving it ships the build host's DNS config and
+# breaks name resolution on the device.
+say "restoring DNS configuration for the shipped system"
+rm -f "$ROOTFS/etc/resolv.conf"
+ln -sf /run/systemd/resolve/stub-resolv.conf "$ROOTFS/etc/resolv.conf"
+mkdir -p "$ROOTFS/etc/NetworkManager/conf.d"
+cat > "$ROOTFS/etc/NetworkManager/conf.d/10-dns-resolved.conf" <<'NMDNS'
+# Hand DNS to systemd-resolved rather than letting NetworkManager write
+# /etc/resolv.conf itself; resolved is enabled on this image.
+[main]
+dns=systemd-resolved
+NMDNS
+
 say "done"

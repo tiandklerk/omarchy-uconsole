@@ -165,7 +165,18 @@ say "cleaning package cache"
 # answers No and the cache is silently kept - 1.7 GB of downloaded packages
 # riding along in the shipped image.
 rm -rf "$ROOTFS/var/cache/pacman/pkg/"*
+# DNS for the shipped system.
+#
+# The chroot above needs a working resolv.conf to reach the mirrors, so the
+# build container's own file gets copied in. It MUST NOT ship: it names the
+# build host's DNS server and a Docker search domain, which leaves the device
+# unable to resolve anything ("Temporary failure in name resolution") even
+# though wifi is up and it has an address.
+#
+# systemd-resolved is enabled (Omarchy re-enables it during apply-system even
+# if we disable it), so point resolv.conf at its stub, which is the arrangement
+# resolved and NetworkManager both expect.
 rm -f "$ROOTFS/etc/resolv.conf"
-ln -sf /run/systemd/resolve/stub-resolv.conf "$ROOTFS/etc/resolv.conf" 2>/dev/null || true
+ln -sf /run/systemd/resolve/stub-resolv.conf "$ROOTFS/etc/resolv.conf"
 
 say "rootfs size: $(du -sh --exclude=proc --exclude=sys --exclude=dev "$ROOTFS" | cut -f1)"
