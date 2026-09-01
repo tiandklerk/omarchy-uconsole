@@ -1,0 +1,17 @@
+[Unit]
+Description=Gate the uConsole speaker amplifier on audio activity
+Documentation=https://forum.clockworkpi.com/t/uconsole-cm5-hissing-crackling-noises-when-moving-the-mouse-clicking-or-screen-refresh-bookworm-kernel-6-12-battery-powered/18966
+After=sound.target
+Wants=sound.target
+
+[Service]
+Type=simple
+ExecStart=/usr/local/bin/uconsole-audio-amp
+# If this dies, leave the amp ON rather than silent - a hiss is better than a
+# device that appears to have lost its speaker.
+ExecStopPost=/bin/sh -c 'n=$(sed -n "s/^[[:space:]]*gpio-\\([0-9]\\+\\).* GPIO11\\b.*/\\1/p" /sys/kernel/debug/gpio 2>/dev/null | head -1); [ -n "$n" ] && echo 1 > /sys/class/gpio/gpio$n/value 2>/dev/null || true'
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

@@ -106,6 +106,9 @@ grep -q "transform = 3" /m/etc/skel/.config/hypr/monitors.lua 2>/dev/null
 chk "panel rotation configured (transform 3)" $?
 [[ -f /m/etc/udev/rules.d/99-uconsole-power.rules ]]; chk "battery charge-rate rule present" $?
 [[ -x /m/usr/local/bin/uconsole-firstboot-resize ]]; chk "first-boot resize script present" $?
+[[ -x /m/usr/local/bin/uconsole-audio-amp ]]; chk "speaker amp gating script present" $?
+[[ -L /m/etc/systemd/system/multi-user.target.wants/uconsole-audio-amp.service ]]
+chk "speaker amp gating enabled (silences idle hiss)" $?
 
 # Every package we went to the trouble of building for aarch64 must actually be
 # IN the image. This has been wrong twice: the rootfs was populated from a repo
@@ -148,10 +151,16 @@ chk "resolv.conf is a symlink for the resolver to manage, not a static file" $?
 # image marked as a dependency with nothing depending on it gets deleted on the
 # first update. This removed the wifi firmware once: trimming the meta-package
 # orphaned linux-firmware-broadcom, and the next update took it.
+# Marking the firmware explicit was NOT enough: on a real device the install
+# reason came back as a dependency after flashing and updating, and Omarchy
+# offered to delete the wifi firmware again. The durable fix is a meta-package
+# that depends on it, so no install-reason change can orphan it.
+ls -d /m/var/lib/pacman/local/uconsole-firmware-[0-9]* >/dev/null 2>&1
+chk "uconsole-firmware meta-package pins the firmware against orphan cleanup" $?
 for fw in linux-firmware-broadcom linux-firmware-whence linux-firmware-realtek; do
-  d=$(ls -d /m/var/lib/pacman/local/${fw}-[0-9]* 2>/dev/null | head -1)
-  [[ -n "$d" ]] && ! grep -q "^%REASON%" "$d/desc" 2>/dev/null
-  chk "$fw is explicitly installed, not an orphan" $?
+  grep -qx "$fw" /m/var/lib/pacman/local/uconsole-firmware-[0-9]*/depends 2>/dev/null || \
+    grep -q "$fw" /m/var/lib/pacman/local/uconsole-firmware-[0-9]*/desc 2>/dev/null
+  chk "$fw is pinned by the meta-package" $?
 done
 
 echo

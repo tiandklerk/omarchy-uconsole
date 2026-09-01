@@ -1,0 +1,45 @@
+# A meta-package whose only job is to depend on the firmware this device needs,
+# so that firmware can never be reported as an orphan.
+#
+# Why this exists: trimming the `linux-firmware` meta-package (to drop ~840 MB
+# of blobs for hardware a CM5 cannot have) left the kept subpackages with
+# nothing depending on them. Omarchy runs `omarchy-update-orphan-pkgs` on every
+# update, offering to `pacman -Rns` anything orphaned - and a user who accepts
+# loses their wifi and Bluetooth firmware, on a device whose only network is
+# wifi.
+#
+# Marking them explicit with `pacman -D --asexplicit` fixes it in the image, but
+# was observed NOT to survive on a real device: after flashing and updating,
+# they showed up as orphans again. Rather than keep chasing whatever re-marks
+# them, this makes the question moot - a package depending on them means they
+# are never orphans, whatever their install reason says.
+pkgname=uconsole-firmware
+pkgver=1.0.0
+pkgrel=1
+pkgdesc='Pins the firmware the ClockworkPi uConsole CM5 needs so it is never orphaned'
+arch=('any')
+url='https://github.com/tiandklerk/omarchy-uconsole'
+license=('MIT')
+
+depends=(
+  # The CM5 radio: brcmfmac wifi and the CYW43455 Bluetooth blob. Losing this
+  # costs the only network interface the device has.
+  'linux-firmware-broadcom'
+  # Licence text the other firmware packages reference.
+  'linux-firmware-whence'
+  # Plausible USB peripherals: realtek covers most USB ethernet and wifi
+  # dongles, cirrus covers audio codecs.
+  'linux-firmware-realtek'
+  'linux-firmware-cirrus'
+  'linux-firmware-other'
+)
+
+package() {
+  install -Dm644 /dev/stdin "$pkgdir/usr/share/doc/$pkgname/README" <<'DOC'
+This package installs no files. It exists only so that the firmware packages it
+depends on are never reported as orphans by `pacman -Qtdq`, and therefore never
+offered for removal by omarchy-update-orphan-pkgs.
+
+Removing this package will orphan the uConsole's wifi and Bluetooth firmware.
+DOC
+}

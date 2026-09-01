@@ -1,0 +1,59 @@
+#!/bin/bash
+# Gate the uConsole speaker amplifier on actual audio activity.
+#
+# The amp enable line (GPIO11) is driven high at boot by `gpio=11=op,dh` in
+# config.txt, because without it the speaker is silent. Leaving it high means
+# the amp is always powered and always amplifying whatever is on its input -
+# which on this board includes supply noise that gets worse as the battery sags.
+# Hence the well-known hiss and crackle, most obvious below ~10% charge.
+#
+# Software cannot clean up an analogue rail. What it can do is not amplify
+# silence: hold the amp off while nothing is playing, and switch it on when
+# something is. Idle hiss then disappears entirely, at any charge level.
+#
+# Playback state comes from ALSA rather than PipeWire, so this works regardless
+# of which sound server is in use and needs no session bus.
+set -uo pipefail
+
+GPIO_CHIP_BASE_NAME="GPIO11"     # gpio-580 on this kernel; resolved by label
+HOLD_OFF=3                       # seconds of silence before powering the amp down
+POLL=1
+
+# Resolve GPIO11 by name rather than hard-coding 580: the base offset moves
+# between kernel versions.
+find_gpio() {
+  local line num
+  line=$(grep -m1 " ${GPIO_CHIP_BASE_NAME}\b" /sys/kernel/debug/gpio 2>/dev/null) || return 1
+  num=$(sed -n 's/^[[:space:]]*gpio-\([0-9]\+\).*/\1/p' <<<"$line")
+  [[ -n "$num" ]] && echo "$num"
+}
+
+GPIO=$(find_gpio) || { echo "cannot locate ${GPIO_CHIP_BASE_NAME}; leaving amp as-is" >&2; exit 0; }
+SYS=/sys/class/gpio/gpio$GPIO
+
+setup() {
+  [[ -d "$SYS" ]] || echo "$GPIO" > /sys/class/gpio/export 2>/dev/null
+  [[ -d "$SYS" ]] || return 1
+  echo out > "$SYS/direction" 2>/dev/null
+}
+amp() { echo "$1" > "$SYS/value" 2>/dev/null; }
+
+setup || { echo "cannot control gpio$GPIO; leaving amp enabled" >&2; exit 0; }
+
+# Anything actively playing on any card counts.
+playing() {
+  grep -qs "^state: RUNNING" /proc/asound/card*/pcm*p/sub*/status
+}
+
+amp 0                     # start quiet
+last_active=0
+while true; do
+  if playing; then
+    (( last_active )) || amp 1
+    last_active=$(( $(date +%s) ))
+  elif (( last_active )) && (( $(date +%s) - last_active >= HOLD_OFF )); then
+    amp 0
+    last_active=0
+  fi
+  sleep "$POLL"
+done
