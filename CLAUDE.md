@@ -55,10 +55,18 @@ hard-locks the device, requiring a power cycle. This is why Raspberry Pi ships
 `omarchy-update-orphan-pkgs` runs `pacman -Rns` over `pacman -Qtdq`. Trimming
 the `linux-firmware` meta-package orphaned the wifi firmware and an update
 deleted it, leaving a device that detects its radio and cannot load firmware.
-Marking packages explicit was **not** durable — the reason came back as a
-dependency on a real device. The fix is `packages/uconsole-firmware`, a
-meta-package that *depends* on the firmware. **Install reason is advisory;
-a dependency is structural.**
+The fix is `packages/uconsole-firmware`, a meta-package that *depends* on the
+firmware, so it can never be orphaned.
+
+A caveat on that reasoning: it was originally concluded that marking packages
+explicit was "not durable", because a device showed the firmware as orphaned
+again after flashing. That device turned out to have been flashed with an
+**older image predating the explicit marking**, so the evidence for
+re-marking was bad. Marking explicit may well be sufficient. The meta-package
+is kept anyway because a dependency is a structural guarantee where an install
+reason is advisory metadata that any tool may change — but do not repeat the
+claim that install reasons demonstrably get reset here, because that was never
+actually shown.
 
 **Omarchy's pacman config is x86-shaped.** `omarchy-apply-system` installs a
 mirrorlist pointing at `mirror.omarchy.org` (x86_64 only), declares `[multilib]`
