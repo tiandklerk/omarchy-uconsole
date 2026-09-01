@@ -176,6 +176,31 @@ ext4 rather than btrfs: Omarchy's btrfs setup exists to serve limine-based
 snapshot rollback, which has no bootloader to hook into here, and ext4 can be
 grown in place with `resize2fs`.
 
+### Orphaned packages are deleted by omarchy update
+
+Omarchy runs `omarchy-update-orphan-pkgs` on every update, which is effectively
+`pacman -Rns $(pacman -Qtdq)`. **Anything in the image marked "installed as
+dependency" with nothing depending on it will be deleted the first time the user
+updates.**
+
+This cost a working device once. Trimming the firmware removed the
+`linux-firmware` meta-package, which was the only thing depending on
+`linux-firmware-broadcom`. The kept subpackages stayed marked as dependencies,
+became orphans, and the next `omarchy update` deleted them — leaving a machine
+that detects its radio and then cannot load firmware for it:
+
+```
+brcmfmac: brcmf_fw_alloc_request: using brcm/brcmfmac43455-sdio for chip BCM4345/6
+brcmfmac mmc1:0001:1: Direct firmware load for brcm/brcmfmac43455-sdio.bin failed with error -2
+```
+
+Stage 20 therefore marks everything in `packages/uconsole-extra.packages` as
+explicitly installed and warns about any remaining orphan, and
+`verify-image.sh` fails if the firmware packages are not explicit.
+
+The lesson generalises: **removing a meta-package orphans everything it pulled
+in.** Any future trimming must re-mark the survivors.
+
 ## Package management on ARM
 
 Two of Omarchy's assumptions break pacman on aarch64, and both are corrected by

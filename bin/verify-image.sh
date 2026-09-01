@@ -144,6 +144,16 @@ chk "no build-host DNS config leaked into the image" $?
 [[ -L /m/etc/resolv.conf ]]
 chk "resolv.conf is a symlink for the resolver to manage, not a static file" $?
 
+# Omarchy runs pacman -Rns on orphans during every update. Any package in the
+# image marked as a dependency with nothing depending on it gets deleted on the
+# first update. This removed the wifi firmware once: trimming the meta-package
+# orphaned linux-firmware-broadcom, and the next update took it.
+for fw in linux-firmware-broadcom linux-firmware-whence linux-firmware-realtek; do
+  d=$(ls -d /m/var/lib/pacman/local/${fw}-[0-9]* 2>/dev/null | head -1)
+  [[ -n "$d" ]] && ! grep -q "^%REASON%" "$d/desc" 2>/dev/null
+  chk "$fw is explicitly installed, not an orphan" $?
+done
+
 echo
 if (( fail )); then
   printf "\033[1;31mimage verification FAILED\033[0m\n"; exit 1

@@ -157,6 +157,30 @@ inchroot 'systemctl enable uconsole-firstboot-resize.service'
 # ALARM's default network stack conflicts with NetworkManager.
 inchroot 'systemctl disable systemd-networkd systemd-resolved 2>/dev/null || true'
 
+# --- orphan check -----------------------------------------------------------
+# Omarchy runs `omarchy-update-orphan-pkgs` on every update, which is
+# `pacman -Rns $(pacman -Qtdq)`. Anything in the image marked "installed as
+# dependency" with nothing depending on it WILL BE DELETED on the user's first
+# update.
+#
+# This bit hard: trimming the firmware removed the `linux-firmware`
+# meta-package, which was the only thing depending on linux-firmware-broadcom.
+# The kept subpackages were still marked as dependencies, so they became
+# orphans, and the first `omarchy update` deleted the wifi firmware - leaving a
+# device that detects its radio and cannot load firmware for it.
+#
+# Mark everything we deliberately keep as explicitly installed.
+say "marking deliberately-kept packages as explicit (orphan protection)"
+inchroot "pacman -D --asexplicit $(grep -vE '^\s*(#|$)' /src/packages/uconsole-extra.packages | tr '\n' ' ')" \
+  2>/dev/null | tail -3 || true
+
+remaining=$(chroot "$ROOTFS" pacman -Qtdq 2>/dev/null | tr '\n' ' ')
+if [[ -n "$remaining" ]]; then
+  warn "orphans remain and will be removed by the first omarchy update: $remaining"
+else
+  echo "  no orphans"
+fi
+
 say "restoring pacman's space check for the shipped system"
 sed -i 's/^#CheckSpace/CheckSpace/' "$ROOTFS/etc/pacman.conf"
 
