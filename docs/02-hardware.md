@@ -176,6 +176,20 @@ ext4 rather than btrfs: Omarchy's btrfs setup exists to serve limine-based
 snapshot rollback, which has no bootloader to hook into here, and ext4 can be
 grown in place with `resize2fs`.
 
+### USB autosuspend
+
+Omarchy ships `options usbcore autosuspend=-1` in `/etc/modprobe.d/` to disable
+USB autosuspend. **That file has no effect here**: `usbcore` is built into this
+kernel rather than loaded as a module, so `modprobe.d` options are never read.
+The running value stayed at the default `2` seconds.
+
+`usbcore.autosuspend=-1` is therefore set on the kernel command line in
+`overlay/boot/cmdline.txt`, which is the only place a built-in module reads
+parameters from.
+
+Worth remembering generally: any Omarchy `modprobe.d` setting for a built-in
+module is silently inert on this image.
+
 ### Orphaned packages are deleted by omarchy update
 
 Omarchy runs `omarchy-update-orphan-pkgs` on every update, which is effectively
