@@ -16,9 +16,14 @@ if [[ -t 1 ]] && (( ! BRIEF )); then
   G=$'\e[1;32m'; R=$'\e[1;31m'; Y=$'\e[1;33m'; D=$'\e[2m'; N=$'\e[0m'
 else G=; R=; Y=; D=; N=; fi
 
-ok()   { printf "  ${G}PASS${N}  %s\n" "$1"; ((pass++)); }
-bad()  { printf "  ${R}FAIL${N}  %s\n" "$1"; [[ -n "${2:-}" ]] && printf "        ${D}%s${N}\n" "$2"; ((fail++)); }
-note() { printf "  ${Y}WARN${N}  %s\n" "$1"; [[ -n "${2:-}" ]] && printf "        ${D}%s${N}\n" "$2"; ((warn++)); }
+# NOTE: `((var++))` returns the PRE-increment value as the exit status, which
+# is falsy (1) exactly when var is 0 - i.e. on each counter's first call. That
+# made the very first ok()/bad()/note() invocation in a run also fall through
+# to the CALLER's `||` branch, so e.g. "board: ..." printed as both PASS and
+# WARN for the same line. `var=$((var+1))` is an assignment; it always exits 0.
+ok()   { printf "  ${G}PASS${N}  %s\n" "$1"; pass=$((pass+1)); }
+bad()  { printf "  ${R}FAIL${N}  %s\n" "$1"; [[ -n "${2:-}" ]] && printf "        ${D}%s${N}\n" "$2"; fail=$((fail+1)); }
+note() { printf "  ${Y}WARN${N}  %s\n" "$1"; [[ -n "${2:-}" ]] && printf "        ${D}%s${N}\n" "$2"; warn=$((warn+1)); }
 sec()  { printf "\n${D}== %s ==${N}\n" "$1"; }
 
 sec "Hardware"
@@ -78,10 +83,32 @@ sec "Power"
 cap=$(cat /sys/class/power_supply/axp20x-battery/capacity 2>/dev/null)
 [[ -n "$cap" ]] && ok "battery reports ${cap}%" || bad "no battery reading"
 cc=$(cat /sys/class/power_supply/axp20x-battery/constant_charge_current 2>/dev/null)
-[[ "${cc:-0}" -ge 2000000 ]] && ok "charge current ${cc} (raised)" \
-  || note "charge current ${cc:-unknown}" "below 2000000 means it may drain while plugged in"
-[[ -z "$(cat /sys/power/state 2>/dev/null)" ]] && ok "suspend disabled (it hard-locks this hardware)" \
-  || note "suspend states available: $(cat /sys/power/state)" "s2idle hard-locks the uConsole"
+# The AXP228 only accepts current in ~150000uA steps from a 300000uA base, so
+# a udev rule requesting 2000000 legitimately lands on the driver's nearest
+# step, 1950000 - confirmed by the step arithmetic, not a rounding bug.
+[[ "${cc:-0}" -ge 1900000 ]] && ok "charge current ${cc} (raised from the too-low default)" \
+  || note "charge current ${cc:-unknown}" "well below the requested rate; may drain while plugged in"
+# The kernel keeps offering these states regardless of our config (this
+# device'"'"'s kernel predates the CONFIG_SUSPEND removal); what actually stops a
+# hard lock is every *reachable* path being blocked: the sleep targets are
+# masked (systemctl suspend fails outright) and the menu'"'"'s "Sleep" entry calls
+# uconsole-lock-and-blank, never systemctl suspend. Check both explicitly
+# rather than trusting the kernel capability list alone.
+if [[ -z "$(cat /sys/power/state 2>/dev/null)" ]]; then
+  ok "suspend disabled at the kernel (no states offered)"
+else
+  masked=1
+  for t in sleep.target suspend.target hibernate.target hybrid-sleep.target suspend-then-hibernate.target; do
+    [[ "$(systemctl is-enabled "$t" 2>/dev/null)" == "masked" ]] || masked=0
+  done
+  if (( masked )); then
+    note "kernel offers sleep states ($(cat /sys/power/state)) but all systemd sleep targets are masked" \
+      "s2idle hard-locks this hardware; masking blocks every reachable path to it"
+  else
+    bad "kernel offers sleep states AND sleep targets are not all masked" \
+      "systemctl suspend would reach s2idle, which hard-locks this hardware"
+  fi
+fi
 
 sec "Desktop"
 systemctl is-active sddm >/dev/null 2>&1 && ok "sddm running" || bad "sddm not running"

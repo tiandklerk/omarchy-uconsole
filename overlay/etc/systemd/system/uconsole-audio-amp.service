@@ -8,8 +8,9 @@ Wants=sound.target
 Type=simple
 ExecStart=/usr/local/bin/uconsole-audio-amp
 # If this dies, leave the amp ON rather than silent - a hiss is better than a
-# device that appears to have lost its speaker.
-ExecStopPost=/bin/sh -c 'n=$(sed -n "s/^[[:space:]]*gpio-\\([0-9]\\+\\).* GPIO11\\b.*/\\1/p" /sys/kernel/debug/gpio 2>/dev/null | head -1); [ -n "$n" ] && echo 1 > /sys/class/gpio/gpio$n/value 2>/dev/null || true'
+# device that appears to have lost its speaker. Same base+offset lookup as the
+# main script; NOT the debugfs-based one, which is root-only and was the bug.
+ExecStopPost=/bin/sh -c 'for c in /sys/class/gpio/gpiochip*; do grep -qi "pinctrl-rp1" "$c/label" 2>/dev/null || continue; b=$(cat "$c/base" 2>/dev/null); [ -n "$b" ] && n=$((b+11)) && echo 1 > /sys/class/gpio/gpio$n/value 2>/dev/null; done; true'
 Restart=on-failure
 RestartSec=5
 

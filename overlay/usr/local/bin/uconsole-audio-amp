@@ -15,20 +15,35 @@
 # of which sound server is in use and needs no session bus.
 set -uo pipefail
 
-GPIO_CHIP_BASE_NAME="GPIO11"     # gpio-580 on this kernel; resolved by label
 HOLD_OFF=3                       # seconds of silence before powering the amp down
 POLL=1
 
-# Resolve GPIO11 by name rather than hard-coding 580: the base offset moves
-# between kernel versions.
+# Resolve GPIO11's sysfs number from the pinctrl-rp1 chip's base, rather than
+# parsing /sys/kernel/debug/gpio.
+#
+# THIS IS THE FIX for a bug that made this service silently do nothing on
+# every boot since it was written: /sys/kernel/debug/gpio is root-only
+# (mode 0400), and even running as root under systemd, the label-text match
+# against it never succeeded, so find_gpio always failed and the script exited
+# via the "leaving amp as-is" path - meaning the amp stayed permanently
+# enabled exactly as before this feature existed.
+#
+# pinctrl-rp1's gpiochip base + offset 11 IS the RP1 GPIO11 line: the RP1
+# pinctrl driver numbers its lines 0-53 matching the physical GPIO numbers
+# directly, and /sys/class/gpio/gpiochip*/base and label are world-readable,
+# so this needs no root and no debugfs.
 find_gpio() {
-  local line num
-  line=$(grep -m1 " ${GPIO_CHIP_BASE_NAME}\b" /sys/kernel/debug/gpio 2>/dev/null) || return 1
-  num=$(sed -n 's/^[[:space:]]*gpio-\([0-9]\+\).*/\1/p' <<<"$line")
-  [[ -n "$num" ]] && echo "$num"
+  local chip base
+  for chip in /sys/class/gpio/gpiochip*; do
+    [[ -f "$chip/label" ]] || continue
+    grep -qi "pinctrl-rp1" "$chip/label" 2>/dev/null || continue
+    base=$(cat "$chip/base" 2>/dev/null) || continue
+    [[ "$base" =~ ^[0-9]+$ ]] && echo $(( base + 11 )) && return 0
+  done
+  return 1
 }
 
-GPIO=$(find_gpio) || { echo "cannot locate ${GPIO_CHIP_BASE_NAME}; leaving amp as-is" >&2; exit 0; }
+GPIO=$(find_gpio) || { echo "cannot locate GPIO11 via pinctrl-rp1; leaving amp as-is" >&2; exit 0; }
 SYS=/sys/class/gpio/gpio$GPIO
 
 setup() {

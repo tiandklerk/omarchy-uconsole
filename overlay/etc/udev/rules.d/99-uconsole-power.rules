@@ -4,6 +4,10 @@
 # barely keeps up with the CM5 under load - the battery drains while plugged
 # in. ClockworkPi's own images raise it; these are the same values used by
 # ak-rex's Debian images.
+#
+# The driver quantizes to ~150000uA steps from a 300000uA base and rounds
+# down, so these requests land as 1950000 / 2100000 on the device - confirmed
+# by the step arithmetic. That is expected, not a misapplied rule.
 KERNEL=="axp20x-battery", ATTR{constant_charge_current_max}="2200000", ATTR{constant_charge_current}="2000000"
 
 # Let members of the video group set panel brightness without root, which is
