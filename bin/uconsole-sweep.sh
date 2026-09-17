@@ -47,9 +47,17 @@ sec "Input"
 grep -q "Clockwork uConsole Keyboard" /proc/bus/input/devices && ok "keyboard present" || bad "keyboard not found"
 grep -q "uConsole Keyboard Mouse" /proc/bus/input/devices && ok "trackball present" || note "trackball not found"
 if command -v udevadm >/dev/null; then
-  udevadm info --query=property --name=/dev/input/event6 2>/dev/null | grep -q "KEYBOARD_KEY_700e2=leftmeta" \
-    && ok "Super key remap applied (Left Alt)" \
-    || note "Super key remap not visible on event6" "check other event nodes"
+  # Which /dev/input/eventN is "Clockwork uConsole Keyboard" shifts between
+  # boots (HID enumeration order is not guaranteed), so check every keyboard
+  # interface rather than a hardcoded node.
+  found=0
+  for d in /sys/class/input/event*; do
+    [[ "$(cat "$d/device/name" 2>/dev/null)" == "Clockwork uConsole Keyboard" ]] || continue
+    e="/dev/input/$(basename "$d")"
+    udevadm info --query=property --name="$e" 2>/dev/null | grep -q "KEYBOARD_KEY_700e2=leftmeta" && { found=1; break; }
+  done
+  (( found )) && ok "Super key remap applied (Left Alt)" \
+    || bad "Super key remap not applied on any keyboard interface"
 fi
 
 sec "Network"
@@ -60,9 +68,20 @@ ip -br addr show scope global 2>/dev/null | grep -q UP && ok "an interface is up
 getent hosts github.com >/dev/null 2>&1 && ok "DNS resolves" || bad "DNS not resolving" "check /etc/resolv.conf is a symlink"
 
 sec "Packages"
-orph=$(pacman -Qtdq 2>/dev/null | grep -v '^mkinitcpio$' | tr '\n' ' ')
-[[ -z "$orph" ]] && ok "no unexpected orphans (mkinitcpio is expected)" \
-  || bad "orphans present: $orph" "omarchy update will offer to DELETE these"
+orph=$(pacman -Qtdq 2>/dev/null)
+# Benign build-time orphans (mkinitcpio, and anything pulled in as a makedepend
+# by first-boot provisioning or a `yay -S`) are expected - that is the entire
+# reason omarchy-update-orphan-pkgs exists, to let the user clean them up. The
+# only orphan that actually matters is firmware, which uconsole-firmware exists
+# to pin against; check that specifically rather than failing on any orphan.
+fw_orphan=$(grep '^linux-firmware' <<<"$orph" || true)
+if [[ -n "$fw_orphan" ]]; then
+  bad "firmware is orphaned: $(tr '\n' ' ' <<<"$fw_orphan")" "omarchy update will offer to DELETE it; uconsole-firmware should prevent this"
+elif [[ -n "$orph" ]]; then
+  note "benign orphans present: $(tr '\n' ' ' <<<"$orph")" "expected after any package build; safe to clean via omarchy update's orphan prompt"
+else
+  ok "no orphans"
+fi
 pacman -Q uconsole-firmware >/dev/null 2>&1 && ok "uconsole-firmware pins the firmware" \
   || bad "uconsole-firmware meta-package missing" "firmware can be orphaned and deleted"
 for p in mise-bin yay xdg-terminal-exec omarchy omarchy-settings; do
